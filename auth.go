@@ -5,10 +5,9 @@ import (
 	"fmt"
 	"time"
 
+	utils "github.com/Laisky/go-utils"
 	"github.com/Laisky/zap"
 	"github.com/pkg/errors"
-
-	utils "github.com/Laisky/go-utils"
 )
 
 const (

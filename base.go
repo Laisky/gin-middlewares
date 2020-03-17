@@ -6,7 +6,6 @@ import (
 
 	"github.com/Laisky/go-utils"
 	"github.com/Laisky/zap"
-
 	"github.com/gin-gonic/gin"
 )
 

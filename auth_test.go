@@ -1,14 +1,11 @@
-package middlewares_test
+package middlewares
 
 import (
 	"net/http"
 
-	middlewares "github.com/Laisky/gin-middlewares"
-	"github.com/Laisky/zap"
-
-	"github.com/gin-gonic/gin"
-
 	"github.com/Laisky/go-utils"
+	"github.com/Laisky/zap"
+	"github.com/gin-gonic/gin"
 )
 
 type User struct{}
@@ -22,7 +19,7 @@ func (u *User) GetID() string {
 }
 
 func ExampleAuth() {
-	auth, err := middlewares.NewAuth([]byte("f32lifj2f32fj"))
+	auth, err := NewAuth([]byte("f32lifj2f32fj"))
 	if err != nil {
 		utils.Logger.Panic("try to init gin auth got error", zap.Error(err))
 	}
@@ -41,7 +38,7 @@ func ExampleAuth() {
 	}
 
 	Server := gin.New()
-	Server.Handle("ANY", "/authorized/", middlewares.FromStd(DemoHandle))
+	Server.Handle("ANY", "/authorized/", FromStd(DemoHandle))
 }
 
 func DemoHandle(w http.ResponseWriter, r *http.Request) {

@@ -7,6 +7,7 @@ import (
 
 	utils "github.com/Laisky/go-utils"
 	"github.com/Laisky/zap"
+	"github.com/dgrijalva/jwt-go"
 	"github.com/pkg/errors"
 )
 
@@ -17,7 +18,6 @@ const (
 	// defaultAuthUserIDCtxKey           = "auth_uid"
 	defaultAuthJWTTokenExpireDuration = 7 * 24 * time.Hour
 
-	defaultAuthCookieMaxAge   = 3600 * 24 * 7 // 7days
 	defaultAuthCookiePath     = "/"
 	defaultAuthCookieSecure   = false
 	defaultAuthCookieHTTPOnly = false
@@ -48,7 +48,10 @@ type Auth struct {
 // NewAuth create new Auth
 func NewAuth(secret []byte, opts ...AuthOptFunc) (a *Auth, err error) {
 	var j *utils.JWT
-	if j, err = utils.NewJWT(secret); err != nil {
+	if j, err = utils.NewJWT(
+		utils.WithJWTSignMethod(jwt.SigningMethodHS512),
+		utils.WithJWTSecretByte(secret),
+	); err != nil {
 		return nil, errors.Wrap(err, "try to create Auth got error")
 	}
 
@@ -64,32 +67,18 @@ func NewAuth(secret []byte, opts ...AuthOptFunc) (a *Auth, err error) {
 	return a, nil
 }
 
-// ValidateAndGetUID get token from request.ctx then validate and return userid
-func (a *Auth) ValidateAndGetUID(ctx context.Context) (uid string, err error) {
-	var (
-		token   string
-		payload map[string]interface{}
-	)
+// GetUserClaims get token from request.ctx then validate and return userid
+func (a *Auth) GetUserClaims(ctx context.Context, claims jwt.Claims) (err error) {
+	var token string
 	if token, err = GetGinCtxFromStdCtx(ctx).Cookie(defaultAuthTokenName); err != nil {
-		return "", errors.New("jwt token not found")
+		return errors.New("jwt token not found")
 	}
 
-	if payload, err = a.jwt.Validate(token); err != nil {
-		return "", errors.Wrap(err, "token invalidate")
+	if err = a.jwt.ParseClaims(token, claims); err != nil {
+		return errors.Wrap(err, "token invalidate")
 	}
 
-	var ok bool
-	if uid, ok = payload[a.jwt.GetUserIDKey()].(string); !ok {
-		return "", fmt.Errorf("unknown type of uid")
-	}
-
-	return
-}
-
-// UserItf User model interface
-type UserItf interface {
-	GetPayload() map[string]interface{}
-	GetID() string
+	return nil
 }
 
 type authCookieOption struct {
@@ -150,12 +139,12 @@ func WithAuthCookieHost(host string) AuthCookieOptFunc {
 }
 
 // SetLoginCookie set jwt token to cookies
-func (a *Auth) SetLoginCookie(ctx context.Context, user UserItf, opts ...AuthCookieOptFunc) (err error) {
-	utils.Logger.Info("user login", zap.String("user", user.GetID()))
+func (a *Auth) SetLoginCookie(ctx context.Context, claims jwt.Claims, opts ...AuthCookieOptFunc) (err error) {
+	utils.Logger.Debug("SetLoginCookie")
 	ctx2 := GetGinCtxFromStdCtx(ctx)
 
 	opt := &authCookieOption{
-		maxAge:   defaultAuthCookieMaxAge,
+		maxAge:   int(a.jwtTokenExpireDuration.Seconds()),
 		path:     defaultAuthCookiePath,
 		secure:   defaultAuthCookieSecure,
 		httpOnly: defaultAuthCookieHTTPOnly,
@@ -168,7 +157,7 @@ func (a *Auth) SetLoginCookie(ctx context.Context, user UserItf, opts ...AuthCoo
 	}
 
 	var token string
-	if token, err = a.jwt.GenerateToken(user.GetID(), utils.Clock.GetUTCNow().Add(a.jwtTokenExpireDuration), user.GetPayload()); err != nil {
+	if token, err = a.jwt.Sign(claims); err != nil {
 		return errors.Wrap(err, "try to generate token got error")
 	}
 

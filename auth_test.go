@@ -5,17 +5,12 @@ import (
 
 	"github.com/Laisky/go-utils"
 	"github.com/Laisky/zap"
+	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
 )
 
-type User struct{}
-
-func (u *User) GetPayload() map[string]interface{} {
-	return map[string]interface{}{"a": "b"}
-}
-
-func (u *User) GetID() string {
-	return "123"
+type UserClaims struct {
+	jwt.StandardClaims
 }
 
 func ExampleAuth() {
@@ -25,15 +20,14 @@ func ExampleAuth() {
 	}
 
 	ctx := &gin.Context{}
-	uid, err := auth.ValidateAndGetUID(ctx)
-	if err != nil {
+	uc := &UserClaims{}
+	if err := auth.GetUserClaims(ctx, uc); err != nil {
 		utils.Logger.Warn("user invalidate", zap.Error(err))
 	} else {
-		utils.Logger.Info("user validate", zap.String("uid", uid))
+		utils.Logger.Info("user validate", zap.String("uid", uc.Subject))
 	}
 
-	user := &User{}
-	if err = auth.SetLoginCookie(ctx, user); err != nil {
+	if err = auth.SetLoginCookie(ctx, uc); err != nil {
 		utils.Logger.Error("try to set cookie got error", zap.Error(err))
 	}
 

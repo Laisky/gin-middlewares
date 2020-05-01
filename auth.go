@@ -49,7 +49,7 @@ type Auth struct {
 func NewAuth(secret []byte, opts ...AuthOptFunc) (a *Auth, err error) {
 	var j *utils.JWT
 	if j, err = utils.NewJWT(
-		utils.WithJWTSignMethod(jwt.SigningMethodHS512),
+		utils.WithJWTSignMethod(utils.SignMethodHS256),
 		utils.WithJWTSecretByte(secret),
 	); err != nil {
 		return nil, errors.Wrap(err, "try to create Auth got error")

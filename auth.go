@@ -57,7 +57,7 @@ func NewAuth(secret []byte, opts ...AuthOptFunc) (a *Auth, err error) {
 
 	a = &Auth{
 		jwtTokenExpireDuration: defaultAuthJWTTokenExpireDuration,
-		jwt:                    j,
+		jwt: j,
 	}
 	for _, optf := range opts {
 		if err = optf(a); err != nil {
@@ -150,6 +150,10 @@ func (a *Auth) SetLoginCookie(ctx context.Context, claims jwt.Claims, opts ...Au
 		httpOnly: defaultAuthCookieHTTPOnly,
 		host:     ctx2.Request.Host,
 	}
+	if ctx2.Request.URL.Port() != "" {
+		opt.host += ":" + ctx2.Request.URL.Port()
+	}
+
 	for _, optf := range opts {
 		if err = optf(opt); err != nil {
 			return errors.Wrap(err, "set option")

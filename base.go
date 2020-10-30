@@ -5,7 +5,6 @@ import (
 	"net/http"
 
 	"github.com/Laisky/go-utils"
-	"github.com/Laisky/zap"
 	"github.com/gin-gonic/gin"
 )
 
@@ -23,13 +22,4 @@ func FromStd(handler http.HandlerFunc) gin.HandlerFunc {
 // GetGinCtxFromStdCtx get gin context from standard request.context by GinCtxKey
 func GetGinCtxFromStdCtx(ctx context.Context) *gin.Context {
 	return ctx.Value(GinCtxKey).(*gin.Context)
-}
-
-// LoggerMiddleware middleware to logging
-func LoggerMiddleware(ctx *gin.Context) {
-	utils.Logger.Debug("request",
-		zap.String("path", ctx.Request.RequestURI),
-		zap.String("method", ctx.Request.Method),
-	)
-	ctx.Next()
 }

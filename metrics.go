@@ -20,15 +20,15 @@ var (
 	defaultMetricGraceWait = 1 * time.Second
 )
 
-// MetricOption metric option argument
-type MetricOption struct {
+// metricOption metric option argument
+type metricOption struct {
 	addr, pprofPath string
 	graceWait       time.Duration
 }
 
-// NewMetricOption create new default option
-func NewMetricOption() *MetricOption {
-	return &MetricOption{
+// newMetricOption create new default option
+func newMetricOption() *metricOption {
+	return &metricOption{
 		addr:      defaultMetricAddr,
 		pprofPath: defaultPProfPath,
 		graceWait: defaultMetricGraceWait,
@@ -36,11 +36,11 @@ func NewMetricOption() *MetricOption {
 }
 
 // MetricsOptFunc option of metrics
-type MetricsOptFunc func(*MetricOption) error
+type MetricsOptFunc func(*metricOption) error
 
 // WithMetricAddr set option addr
 func WithMetricAddr(addr string) MetricsOptFunc {
-	return func(opt *MetricOption) error {
+	return func(opt *metricOption) error {
 		opt.addr = addr
 		return nil
 	}
@@ -48,7 +48,7 @@ func WithMetricAddr(addr string) MetricsOptFunc {
 
 // WithMetricGraceWait set wating time after graceful shutdown
 func WithMetricGraceWait(wait time.Duration) MetricsOptFunc {
-	return func(opt *MetricOption) error {
+	return func(opt *metricOption) error {
 		opt.graceWait = wait
 		return nil
 	}
@@ -56,7 +56,7 @@ func WithMetricGraceWait(wait time.Duration) MetricsOptFunc {
 
 // WithPprofPath set option pprofPath
 func WithPprofPath(path string) MetricsOptFunc {
-	return func(opt *MetricOption) error {
+	return func(opt *metricOption) error {
 		opt.pprofPath = path
 		return nil
 	}
@@ -64,7 +64,7 @@ func WithPprofPath(path string) MetricsOptFunc {
 
 // EnableMetric enable metrics for exsits gin server
 func EnableMetric(srv *gin.Engine, options ...MetricsOptFunc) (err error) {
-	opt := NewMetricOption()
+	opt := newMetricOption()
 	for _, optf := range options {
 		if err = optf(opt); err != nil {
 			return errors.Wrap(err, "set option")
@@ -76,9 +76,9 @@ func EnableMetric(srv *gin.Engine, options ...MetricsOptFunc) (err error) {
 	return nil
 }
 
-// GetHTTPMetricSrv start new gin server with metrics api
-func GetHTTPMetricSrv(ctx context.Context, options ...MetricsOptFunc) (srv *http.Server, err error) {
-	opt := NewMetricOption()
+// NewHTTPMetricSrv start new gin server with metrics api
+func NewHTTPMetricSrv(ctx context.Context, options ...MetricsOptFunc) (srv *http.Server, err error) {
+	opt := newMetricOption()
 	for _, optf := range options {
 		if err = optf(opt); err != nil {
 			return nil, errors.Wrap(err, "set option")

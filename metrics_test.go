@@ -19,7 +19,7 @@ func TestMetricsSrv(t *testing.T) {
 	defer cancel()
 	addr := "127.0.0.1:48192"
 
-	srv, err := GetHTTPMetricSrv(
+	srv, err := NewHTTPMetricSrv(
 		ctx,
 		WithMetricAddr(addr),
 		WithPprofPath("/pprof"),

@@ -1,15 +1,17 @@
-package middlewares
+package library
 
 import (
 	"context"
 	"net/http"
 
-	"github.com/Laisky/go-utils"
 	"github.com/gin-gonic/gin"
 )
 
+// CtxKeyT type of context key
+type CtxKeyT struct{}
+
 // GinCtxKey key of gin ctx that saved in request.context
-var GinCtxKey utils.CtxKeyT
+var GinCtxKey CtxKeyT
 
 // FromStd convert std handler to gin.Handler, with gin context embedded
 func FromStd(handler http.HandlerFunc) gin.HandlerFunc {

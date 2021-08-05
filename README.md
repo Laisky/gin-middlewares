@@ -6,7 +6,7 @@ separated from `go-utils/gin-middlewares`
 
 ## Metrics Server
 
-You can find example codes in `./example`.
+You can find example codes in `./example/metrics/`.
 
 ### Standalone
 
@@ -17,11 +17,10 @@ package main
 
 import (
 	"context"
+	"log"
 	"time"
 
-	gm "github.com/Laisky/gin-middlewares"
-	gutils "github.com/Laisky/go-utils"
-	"github.com/Laisky/zap"
+	gm "github.com/Laisky/gin-middlewares/metrics"
 )
 
 func main() {
@@ -32,12 +31,13 @@ func main() {
 		gm.WithMetricGraceWait(1*time.Second),
 	)
 	if err != nil {
-		gutils.Logger.Panic("new metric server", zap.Error(err))
+		log.Panic("new metric server", err)
 	}
 
-	gutils.Logger.Info("start server at 127.0.0.1:8080")
-	gutils.Logger.Info("exit", zap.Error(srv.ListenAndServe()))
+	log.Println("start server at 127.0.0.1:8080")
+	log.Println("exit", srv.ListenAndServe())
 }
+
 
 ```
 
@@ -49,11 +49,10 @@ If you already has a gin server, you can add metrics route in your gin server.
 package main
 
 import (
+	"log"
 	"time"
 
-	gm "github.com/Laisky/gin-middlewares"
-	gutils "github.com/Laisky/go-utils"
-	"github.com/Laisky/zap"
+	gm "github.com/Laisky/gin-middlewares/metrics"
 	"github.com/gin-gonic/gin"
 )
 
@@ -61,13 +60,15 @@ func main() {
 	engine := gin.Default()
 
 	if err := gm.EnableMetric(engine,
+		gm.WithMetricAddr("127.0.0.1:8080"),
 		gm.WithPprofPath("/pprof"),
 		gm.WithMetricGraceWait(1*time.Second),
 	); err != nil {
-		gutils.Logger.Panic("enable metrics", zap.Error(err))
+		log.Panic("enable metrics", err)
 	}
 
-	gutils.Logger.Info("start server at 127.0.0.1:8080")
-	gutils.Logger.Info("exit", zap.Error(engine.Run("127.0.0.1:8080")))
+	log.Println("start server at 127.0.0.1:8080")
+	log.Println("exit", engine.Run("127.0.0.1:8080"))
 }
+
 ```

@@ -1,12 +1,11 @@
-package middlewares
+package metrics
 
 import (
 	"context"
+	"log"
 	"net/http"
 	"time"
 
-	utils "github.com/Laisky/go-utils"
-	"github.com/Laisky/zap"
 	"github.com/gin-contrib/pprof"
 	"github.com/gin-gonic/gin"
 	"github.com/pkg/errors"
@@ -95,11 +94,11 @@ func NewHTTPMetricSrv(ctx context.Context, options ...MetricsOptFunc) (srv *http
 
 	go func() {
 		<-ctx.Done()
-		utils.Logger.Info("got signal to shutdown metric server")
+		log.Println("got signal to shutdown metric server")
 		timingCtx, cancel := context.WithTimeout(context.Background(), opt.graceWait)
 		defer cancel()
 		if err := srv.Shutdown(timingCtx); err != nil {
-			utils.Logger.Error("shutdown metrics server", zap.Error(err), zap.String("addr", opt.addr))
+			log.Println("shutdown metrics server", err)
 		}
 	}()
 

@@ -12,7 +12,6 @@ func main() {
 	engine := gin.Default()
 
 	if err := gm.EnableMetric(engine,
-		gm.WithMetricAddr("127.0.0.1:8080"),
 		gm.WithPprofPath("/pprof"),
 		gm.WithMetricGraceWait(1*time.Second),
 	); err != nil {

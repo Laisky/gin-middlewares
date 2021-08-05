@@ -7,7 +7,7 @@ import (
 
 	utils "github.com/Laisky/go-utils"
 	"github.com/Laisky/zap"
-	"github.com/dgrijalva/jwt-go"
+	"github.com/form3tech-oss/jwt-go"
 	"github.com/pkg/errors"
 )
 
@@ -57,7 +57,7 @@ func NewAuth(secret []byte, opts ...AuthOptFunc) (a *Auth, err error) {
 
 	a = &Auth{
 		jwtTokenExpireDuration: defaultAuthJWTTokenExpireDuration,
-		jwt: j,
+		jwt:                    j,
 	}
 	for _, optf := range opts {
 		if err = optf(a); err != nil {

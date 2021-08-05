@@ -14,7 +14,7 @@ import (
 )
 
 var (
-	defaultMetricAddr = "localhost:8080"
+	defaultMetricAddr = "127.0.0.1:8080"
 	// defaultMetricPath      = "/metrics"
 	defaultPProfPath       = "/pprof"
 	defaultMetricGraceWait = 1 * time.Second

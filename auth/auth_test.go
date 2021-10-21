@@ -3,6 +3,7 @@ package auth
 import (
 	"net/http"
 
+	"github.com/Laisky/gin-middlewares/library"
 	"github.com/Laisky/go-utils"
 	"github.com/Laisky/zap"
 	"github.com/form3tech-oss/jwt-go"
@@ -32,7 +33,7 @@ func ExampleAuth() {
 	}
 
 	Server := gin.New()
-	Server.Handle("ANY", "/authorized/", FromStd(DemoHandle))
+	Server.Handle("ANY", "/authorized/", library.FromStd(DemoHandle))
 }
 
 func DemoHandle(w http.ResponseWriter, r *http.Request) {

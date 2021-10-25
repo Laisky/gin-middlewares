@@ -11,9 +11,9 @@ import (
 func main() {
 	engine := gin.Default()
 
-	if err := gm.EnableMetric(engine,
+	if err := gm.Enable(engine,
 		gm.WithPprofPath("/pprof"),
-		gm.WithMetricGraceWait(1*time.Second),
+		gm.WithGraceWait(1*time.Second),
 	); err != nil {
 		log.Panic("enable metrics", err)
 	}

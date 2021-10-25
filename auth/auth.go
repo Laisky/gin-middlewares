@@ -13,22 +13,22 @@ import (
 )
 
 const (
-	// defaultAuthTokenName jwt token cookie name
-	defaultAuthTokenName = "token"
-	// defaultAuthUserIDCtxKey key of user ID in jwt token
-	// defaultAuthUserIDCtxKey           = "auth_uid"
-	defaultAuthJWTTokenExpireDuration = 7 * 24 * time.Hour
+	// defaultTokenName jwt token cookie name
+	defaultTokenName = "token"
+	// defaultUserIDCtxKey key of user ID in jwt token
+	// defaultUserIDCtxKey           = "auth_uid"
+	defaultJWTTokenExpireDuration = 7 * 24 * time.Hour
 
-	defaultAuthCookiePath     = "/"
-	defaultAuthCookieSecure   = false
-	defaultAuthCookieHTTPOnly = false
+	defaultCookiePath     = "/"
+	defaultCookieSecure   = false
+	defaultCookieHTTPOnly = false
 )
 
-// AuthOptFunc auth option
-type AuthOptFunc func(*Auth) error
+// OptFunc auth option
+type OptFunc func(*Auth) error
 
 // WithAuthCookieExpireDuration set auth cookie expiration
-func WithAuthCookieExpireDuration(d time.Duration) AuthOptFunc {
+func WithAuthCookieExpireDuration(d time.Duration) OptFunc {
 	return func(opt *Auth) error {
 		if d < 0 {
 			return fmt.Errorf("duration should not less than 0, got %v", d)
@@ -47,7 +47,7 @@ type Auth struct {
 }
 
 // NewAuth create new Auth
-func NewAuth(secret []byte, opts ...AuthOptFunc) (a *Auth, err error) {
+func NewAuth(secret []byte, opts ...OptFunc) (a *Auth, err error) {
 	var j *gutils.JWT
 	if j, err = gutils.NewJWT(
 		gutils.WithJWTSignMethod(gutils.SignMethodHS256),
@@ -57,7 +57,7 @@ func NewAuth(secret []byte, opts ...AuthOptFunc) (a *Auth, err error) {
 	}
 
 	a = &Auth{
-		jwtTokenExpireDuration: defaultAuthJWTTokenExpireDuration,
+		jwtTokenExpireDuration: defaultJWTTokenExpireDuration,
 		jwt:                    j,
 	}
 	for _, optf := range opts {
@@ -71,7 +71,7 @@ func NewAuth(secret []byte, opts ...AuthOptFunc) (a *Auth, err error) {
 // GetUserClaims get token from request.ctx then validate and return userid
 func (a *Auth) GetUserClaims(ctx context.Context, claims jwt.Claims) (err error) {
 	var token string
-	if token, err = library.GetGinCtxFromStdCtx(ctx).Cookie(defaultAuthTokenName); err != nil {
+	if token, err = library.GetGinCtxFromStdCtx(ctx).Cookie(defaultTokenName); err != nil {
 		return errors.New("jwt token not found")
 	}
 
@@ -88,11 +88,11 @@ type authCookieOption struct {
 	secure, httpOnly bool
 }
 
-// AuthCookieOptFunc auth cookie options
-type AuthCookieOptFunc func(*authCookieOption) error
+// CookieOptFunc auth cookie options
+type CookieOptFunc func(*authCookieOption) error
 
-// WithAuthCookieMaxAge set auth cookie's maxAge
-func WithAuthCookieMaxAge(maxAge int) AuthCookieOptFunc {
+// WithCookieMaxAge set auth cookie's maxAge
+func WithCookieMaxAge(maxAge int) CookieOptFunc {
 	return func(opt *authCookieOption) error {
 		if maxAge < 0 {
 			return fmt.Errorf("maxAge should not less than 0, got %v", maxAge)
@@ -103,8 +103,8 @@ func WithAuthCookieMaxAge(maxAge int) AuthCookieOptFunc {
 	}
 }
 
-// WithAuthCookiePath set auth cookie's path
-func WithAuthCookiePath(path string) AuthCookieOptFunc {
+// WithCookiePath set auth cookie's path
+func WithCookiePath(path string) CookieOptFunc {
 	gutils.Logger.Debug("set auth cookie path", zap.String("path", path))
 	return func(opt *authCookieOption) error {
 		opt.path = path
@@ -112,8 +112,8 @@ func WithAuthCookiePath(path string) AuthCookieOptFunc {
 	}
 }
 
-// WithAuthCookieSecure set auth cookie's secure
-func WithAuthCookieSecure(secure bool) AuthCookieOptFunc {
+// WithCookieSecure set auth cookie's secure
+func WithCookieSecure(secure bool) CookieOptFunc {
 	gutils.Logger.Debug("set auth cookie secure", zap.Bool("secure", secure))
 	return func(opt *authCookieOption) error {
 		opt.secure = secure
@@ -121,8 +121,8 @@ func WithAuthCookieSecure(secure bool) AuthCookieOptFunc {
 	}
 }
 
-// WithAuthCookieHTTPOnly set auth cookie's HTTPOnly
-func WithAuthCookieHTTPOnly(httpOnly bool) AuthCookieOptFunc {
+// WithCookieHTTPOnly set auth cookie's HTTPOnly
+func WithCookieHTTPOnly(httpOnly bool) CookieOptFunc {
 	gutils.Logger.Debug("set auth cookie httpOnly", zap.Bool("httpOnly", httpOnly))
 	return func(opt *authCookieOption) error {
 		opt.httpOnly = httpOnly
@@ -130,8 +130,8 @@ func WithAuthCookieHTTPOnly(httpOnly bool) AuthCookieOptFunc {
 	}
 }
 
-// WithAuthCookieHost set auth cookie's host
-func WithAuthCookieHost(host string) AuthCookieOptFunc {
+// WithCookieHost set auth cookie's host
+func WithCookieHost(host string) CookieOptFunc {
 	gutils.Logger.Debug("set auth cookie host", zap.String("host", host))
 	return func(opt *authCookieOption) error {
 		opt.host = host
@@ -140,15 +140,15 @@ func WithAuthCookieHost(host string) AuthCookieOptFunc {
 }
 
 // SetLoginCookie set jwt token to cookies
-func (a *Auth) SetLoginCookie(ctx context.Context, claims jwt.Claims, opts ...AuthCookieOptFunc) (err error) {
+func (a *Auth) SetLoginCookie(ctx context.Context, claims jwt.Claims, opts ...CookieOptFunc) (err error) {
 	gutils.Logger.Debug("SetLoginCookie")
 	ctx2 := library.GetGinCtxFromStdCtx(ctx)
 
 	opt := &authCookieOption{
 		maxAge:   int(a.jwtTokenExpireDuration.Seconds()),
-		path:     defaultAuthCookiePath,
-		secure:   defaultAuthCookieSecure,
-		httpOnly: defaultAuthCookieHTTPOnly,
+		path:     defaultCookiePath,
+		secure:   defaultCookieSecure,
+		httpOnly: defaultCookieHTTPOnly,
 		host:     ctx2.Request.Host,
 	}
 	if ctx2.Request.URL.Port() != "" {
@@ -166,6 +166,6 @@ func (a *Auth) SetLoginCookie(ctx context.Context, claims jwt.Claims, opts ...Au
 		return errors.Wrap(err, "try to generate token got error")
 	}
 
-	ctx2.SetCookie(defaultAuthTokenName, token, opt.maxAge, opt.path, opt.host, opt.secure, opt.httpOnly)
+	ctx2.SetCookie(defaultTokenName, token, opt.maxAge, opt.path, opt.host, opt.secure, opt.httpOnly)
 	return nil
 }

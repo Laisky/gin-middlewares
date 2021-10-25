@@ -13,57 +13,57 @@ import (
 )
 
 var (
-	defaultMetricAddr = "127.0.0.1:8080"
+	defaultAddr = "127.0.0.1:8080"
 	// defaultMetricPath      = "/metrics"
-	defaultPProfPath       = "/pprof"
-	defaultMetricGraceWait = 1 * time.Second
+	defaultPProfPath = "/pprof"
+	defaultGraceWait = 1 * time.Second
 )
 
-// metricOption metric option argument
-type metricOption struct {
+// option metric option argument
+type option struct {
 	addr, pprofPath string
 	graceWait       time.Duration
 }
 
-// newMetricOption create new default option
-func newMetricOption() *metricOption {
-	return &metricOption{
-		addr:      defaultMetricAddr,
+// newOption create new default option
+func newOption() *option {
+	return &option{
+		addr:      defaultAddr,
 		pprofPath: defaultPProfPath,
-		graceWait: defaultMetricGraceWait,
+		graceWait: defaultGraceWait,
 	}
 }
 
-// MetricsOptFunc option of metrics
-type MetricsOptFunc func(*metricOption) error
+// OptFunc option of metrics
+type OptFunc func(*option) error
 
-// WithMetricAddr set option addr
-func WithMetricAddr(addr string) MetricsOptFunc {
-	return func(opt *metricOption) error {
+// WithAddr set option addr
+func WithAddr(addr string) OptFunc {
+	return func(opt *option) error {
 		opt.addr = addr
 		return nil
 	}
 }
 
-// WithMetricGraceWait set wating time after graceful shutdown
-func WithMetricGraceWait(wait time.Duration) MetricsOptFunc {
-	return func(opt *metricOption) error {
+// WithGraceWait set wating time after graceful shutdown
+func WithGraceWait(wait time.Duration) OptFunc {
+	return func(opt *option) error {
 		opt.graceWait = wait
 		return nil
 	}
 }
 
 // WithPprofPath set option pprofPath
-func WithPprofPath(path string) MetricsOptFunc {
-	return func(opt *metricOption) error {
+func WithPprofPath(path string) OptFunc {
+	return func(opt *option) error {
 		opt.pprofPath = path
 		return nil
 	}
 }
 
-// EnableMetric enable metrics for exsits gin server
-func EnableMetric(srv *gin.Engine, options ...MetricsOptFunc) (err error) {
-	opt := newMetricOption()
+// Enable enable metrics for exsits gin server
+func Enable(srv *gin.Engine, options ...OptFunc) (err error) {
+	opt := newOption()
 	for _, optf := range options {
 		if err = optf(opt); err != nil {
 			return errors.Wrap(err, "set option")
@@ -75,9 +75,9 @@ func EnableMetric(srv *gin.Engine, options ...MetricsOptFunc) (err error) {
 	return nil
 }
 
-// NewHTTPMetricSrv start new gin server with metrics api
-func NewHTTPMetricSrv(ctx context.Context, options ...MetricsOptFunc) (srv *http.Server, err error) {
-	opt := newMetricOption()
+// NewHTTPSrv start new gin server with metrics api
+func NewHTTPSrv(ctx context.Context, options ...OptFunc) (srv *http.Server, err error) {
+	opt := newOption()
 	for _, optf := range options {
 		if err = optf(opt); err != nil {
 			return nil, errors.Wrap(err, "set option")
@@ -102,7 +102,7 @@ func NewHTTPMetricSrv(ctx context.Context, options ...MetricsOptFunc) (srv *http
 		}
 	}()
 
-	if err = EnableMetric(router, options...); err != nil {
+	if err = Enable(router, options...); err != nil {
 		return nil, errors.Wrap(err, "enable metric")
 	}
 

@@ -19,11 +19,11 @@ func TestMetricsSrv(t *testing.T) {
 	defer cancel()
 	addr := "127.0.0.1:48192"
 
-	srv, err := NewHTTPMetricSrv(
+	srv, err := NewHTTPSrv(
 		ctx,
-		WithMetricAddr(addr),
+		WithAddr(addr),
 		WithPprofPath("/pprof"),
-		WithMetricGraceWait(1*time.Second),
+		WithGraceWait(1*time.Second),
 	)
 	if err != nil {
 		t.Fatalf("%+v", err)

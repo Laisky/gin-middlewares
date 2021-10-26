@@ -1,4 +1,4 @@
-package metrics
+package middlewares
 
 import (
 	"context"
@@ -19,11 +19,11 @@ func TestMetricsSrv(t *testing.T) {
 	defer cancel()
 	addr := "127.0.0.1:48192"
 
-	srv, err := NewHTTPSrv(
+	srv, err := NewHTTPMetricSrv(
 		ctx,
-		WithAddr(addr),
+		WithMetricAddr(addr),
 		WithPprofPath("/pprof"),
-		WithGraceWait(1*time.Second),
+		WithMetricGraceWait(1*time.Second),
 	)
 	if err != nil {
 		t.Fatalf("%+v", err)

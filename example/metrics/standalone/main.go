@@ -5,15 +5,15 @@ import (
 	"log"
 	"time"
 
-	gm "github.com/Laisky/gin-middlewares/metrics"
+	ginMw "github.com/Laisky/gin-middlewares"
 )
 
 func main() {
 	ctx := context.Background()
-	srv, err := gm.NewHTTPSrv(ctx,
-		gm.WithAddr("127.0.0.1:8080"),
-		gm.WithPprofPath("/pprof"),
-		gm.WithGraceWait(1*time.Second),
+	srv, err := ginMw.NewHTTPMetricSrv(ctx,
+		ginMw.WithMetricAddr("127.0.0.1:8080"),
+		ginMw.WithPprofPath("/pprof"),
+		ginMw.WithMetricGraceWait(1*time.Second),
 	)
 	if err != nil {
 		log.Panic("new metric server", err)

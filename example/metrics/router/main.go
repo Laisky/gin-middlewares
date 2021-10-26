@@ -4,16 +4,16 @@ import (
 	"log"
 	"time"
 
-	gm "github.com/Laisky/gin-middlewares/metrics"
+	ginMw "github.com/Laisky/gin-middlewares"
 	"github.com/gin-gonic/gin"
 )
 
 func main() {
 	engine := gin.Default()
 
-	if err := gm.Enable(engine,
-		gm.WithPprofPath("/pprof"),
-		gm.WithGraceWait(1*time.Second),
+	if err := ginMw.EnableMetric(engine,
+		ginMw.WithPprofPath("/pprof"),
+		ginMw.WithMetricGraceWait(1*time.Second),
 	); err != nil {
 		log.Panic("enable metrics", err)
 	}

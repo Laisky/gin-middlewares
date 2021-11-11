@@ -225,7 +225,7 @@ func (a *Auth) SetLoginCookiev2(ctx context.Context,
 	}
 
 	ctx2.SetCookie(defaultAuthTokenName, opt.token, opt.maxAge, opt.path, opt.host, opt.secure, opt.httpOnly)
-	return token, nil
+	return opt.token, nil
 }
 
 // Sign sign jwt token

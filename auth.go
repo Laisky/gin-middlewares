@@ -85,6 +85,8 @@ type authCookieOption struct {
 	maxAge           int
 	path, host       string
 	secure, httpOnly bool
+	claim            jwt.Claims
+	token            string
 }
 
 // AuthCookieOptFunc auth cookie options
@@ -138,7 +140,25 @@ func WithAuthCookieHost(host string) AuthCookieOptFunc {
 	}
 }
 
+// WithAuthClaims set claims that will used to sign jwt token
+func WithAuthClaims(claims jwt.Claims) AuthCookieOptFunc {
+	return func(opt *authCookieOption) error {
+		opt.claim = claims
+		return nil
+	}
+}
+
+// WIthAuthToken set jwt token to response
+func WithAuthToken(token string) AuthCookieOptFunc {
+	return func(opt *authCookieOption) error {
+		opt.token = token
+		return nil
+	}
+}
+
 // SetLoginCookie set jwt token to cookies
+//
+// Deprecated: use SetLoginCookiev2 instead
 func (a *Auth) SetLoginCookie(ctx context.Context, claims jwt.Claims, opts ...AuthCookieOptFunc) (err error) {
 	utils.Logger.Debug("SetLoginCookie")
 	ctx2 := GetGinCtxFromStdCtx(ctx)
@@ -161,10 +181,59 @@ func (a *Auth) SetLoginCookie(ctx context.Context, claims jwt.Claims, opts ...Au
 	}
 
 	var token string
-	if token, err = a.jwt.Sign(claims); err != nil {
-		return errors.Wrap(err, "try to generate token got error")
+	if opt.token, err = a.Sign(opt.claim); err != nil {
+		return err
 	}
 
 	ctx2.SetCookie(defaultAuthTokenName, token, opt.maxAge, opt.path, opt.host, opt.secure, opt.httpOnly)
 	return nil
+}
+
+// SetLoginCookiev2 set jwt token to cookies
+func (a *Auth) SetLoginCookiev2(ctx context.Context,
+	opts ...AuthCookieOptFunc) (token string, err error) {
+	utils.Logger.Debug("SetLoginCookiev2")
+	ctx2 := GetGinCtxFromStdCtx(ctx)
+
+	opt := &authCookieOption{
+		maxAge:   int(a.jwtTokenExpireDuration.Seconds()),
+		path:     defaultAuthCookiePath,
+		secure:   defaultAuthCookieSecure,
+		httpOnly: defaultAuthCookieHTTPOnly,
+		host:     ctx2.Request.Host,
+	}
+	if ctx2.Request.URL.Port() != "" {
+		opt.host += ":" + ctx2.Request.URL.Port()
+	}
+
+	for _, optf := range opts {
+		if err = optf(opt); err != nil {
+			return "", errors.Wrap(err, "set option")
+		}
+	}
+
+	if opt.claim == nil && opt.token == "" {
+		return "", errors.New("claim or token should be set")
+	} else if opt.claim != nil && opt.token != "" {
+		return "", errors.New("claim and token should not be set at the same time")
+	}
+
+	if opt.claim != nil {
+		if opt.token, err = a.Sign(opt.claim); err != nil {
+			return "", err
+		}
+	}
+
+	ctx2.SetCookie(defaultAuthTokenName, opt.token, opt.maxAge, opt.path, opt.host, opt.secure, opt.httpOnly)
+	return token, nil
+}
+
+// Sign sign jwt token
+func (a *Auth) Sign(claim jwt.Claims) (string, error) {
+	token, err := a.jwt.Sign(claim)
+	if err != nil {
+		return "", errors.Wrap(err, "try to generate token got error")
+	}
+
+	return token, nil
 }

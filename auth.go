@@ -38,6 +38,14 @@ func WithAuthCookieExpireDuration(d time.Duration) AuthOptFunc {
 	}
 }
 
+// WithAuthJWT set jwt lib
+func WithAuthJWT(jwt *utils.JWT) AuthOptFunc {
+	return func(opt *Auth) error {
+		opt.jwt = jwt
+		return nil
+	}
+}
+
 // Auth JWT cookie based token generator and validator.
 // Cookie looks like <defaultAuthTokenName>:`{<defaultAuthUserIDCtxKey>: "xxxx"}`
 type Auth struct {
@@ -47,23 +55,25 @@ type Auth struct {
 
 // NewAuth create new Auth
 func NewAuth(secret []byte, opts ...AuthOptFunc) (a *Auth, err error) {
-	var j *utils.JWT
-	if j, err = utils.NewJWT(
-		utils.WithJWTSignMethod(utils.SignMethodHS256),
-		utils.WithJWTSecretByte(secret),
-	); err != nil {
-		return nil, errors.Wrap(err, "try to create Auth got error")
-	}
-
 	a = &Auth{
 		jwtTokenExpireDuration: defaultAuthJWTTokenExpireDuration,
-		jwt:                    j,
 	}
 	for _, optf := range opts {
 		if err = optf(a); err != nil {
 			return nil, errors.Wrap(err, "set option")
 		}
 	}
+
+	// set default jwt lib
+	if a.jwt == nil {
+		if a.jwt, err = utils.NewJWT(
+			utils.WithJWTSignMethod(utils.SignMethodHS256),
+			utils.WithJWTSecretByte(secret),
+		); err != nil {
+			return nil, errors.Wrap(err, "try to create Auth got error")
+		}
+	}
+
 	return a, nil
 }
 

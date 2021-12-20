@@ -5,8 +5,8 @@ import (
 
 	"github.com/Laisky/go-utils"
 	"github.com/Laisky/zap"
-	"github.com/form3tech-oss/jwt-go"
 	"github.com/gin-gonic/gin"
+	"github.com/golang-jwt/jwt/v4"
 )
 
 type UserClaims struct {

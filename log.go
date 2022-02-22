@@ -9,14 +9,39 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+type loggerMwOpt struct {
+	colored bool
+}
+
+type LoggerMwOptFunc func(opt *loggerMwOpt)
+
+func WithLoggerMwColored() LoggerMwOptFunc {
+	return func(opt *loggerMwOpt) {
+		opt.colored = true
+	}
+}
+
 // GetLoggerMiddleware middleware to logging
-func GetLoggerMiddleware(logger gutils.LoggerItf) gin.HandlerFunc {
+func GetLoggerMiddleware(logger gutils.LoggerItf, optfs ...LoggerMwOptFunc) gin.HandlerFunc {
+	opt := new(loggerMwOpt)
+	for _, optf := range optfs {
+		optf(opt)
+	}
+
 	return func(ctx *gin.Context) {
 		startAt := gutils.Clock.GetUTCNow()
 
 		ctx.Next()
 
-		logger.Info(coloredStatus(ctx),
+		var status string
+		if opt.colored {
+			status = coloredStatus(ctx)
+		} else {
+			status = strconv.Itoa(ctx.Writer.Status()) + " " + ctx.Request.Method
+
+		}
+
+		logger.Info(status,
 			zap.String("url", ctx.Request.URL.String()),
 			zap.String("remote", ctx.Request.RemoteAddr),
 			zap.String("host", ctx.Request.Host),

@@ -10,7 +10,7 @@ import (
 )
 
 // GetLoggerMiddleware middleware to logging
-func GetLoggerMiddleware(logger *gutils.LoggerType) gin.HandlerFunc {
+func GetLoggerMiddleware(logger gutils.LoggerItf) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		startAt := gutils.Clock.GetUTCNow()
 

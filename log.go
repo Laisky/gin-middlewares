@@ -48,6 +48,11 @@ func WithLogger(logger gutils.LoggerItf) LoggerMwOptFunc {
 	}
 }
 
+// GetLoggerMiddleware get logger middleware
+//
+// Deprecated: use NewLoggerMiddleware instead
+var GetLoggerMiddleware = NewLoggerMiddleware
+
 // NewLoggerMiddleware middleware to logging
 func NewLoggerMiddleware(optfs ...LoggerMwOptFunc) gin.HandlerFunc {
 	opt := new(loggerMwOpt).fillDefault().applyOpts(optfs...)
@@ -64,12 +69,10 @@ func NewLoggerMiddleware(optfs ...LoggerMwOptFunc) gin.HandlerFunc {
 
 		}
 
-		var logger gutils.LoggerItf
-		if opt.ctxKeyLogger != "" {
-			if loggeri, ok := ctx.Get(opt.ctxKeyLogger); ok {
-				logger = loggeri.(gutils.LoggerItf)
-			} else {
-				logger = opt.logger
+		logger := opt.logger
+		if loggeri, ok := ctx.Get(opt.ctxKeyLogger); ok {
+			if l, ok := loggeri.(gutils.LoggerItf); ok && l != nil {
+				logger = l
 			}
 		}
 

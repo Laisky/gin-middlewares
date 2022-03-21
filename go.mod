@@ -3,7 +3,7 @@ module github.com/Laisky/gin-middlewares/v2
 go 1.18
 
 require (
-	github.com/Laisky/gin-middlewares v1.3.0
+	github.com/Laisky/gin-middlewares v1.3.1-0.20220222090315-3bb5d00f8eea
 	github.com/Laisky/go-utils/v2 v2.0.1-0.20220321075929-d09bbb62d6a2
 	github.com/Laisky/zap v1.19.3-0.20211118020215-b17f220cebee
 	github.com/gin-contrib/pprof v1.3.0

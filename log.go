@@ -48,11 +48,6 @@ func WithLogger(logger gutils.LoggerItf) LoggerMwOptFunc {
 	}
 }
 
-// GetLoggerMiddleware get logger middleware
-//
-// Deprecated: use NewLoggerMiddleware instead
-var GetLoggerMiddleware = NewLoggerMiddleware
-
 // NewLoggerMiddleware middleware to logging
 func NewLoggerMiddleware(optfs ...LoggerMwOptFunc) gin.HandlerFunc {
 	opt := new(loggerMwOpt).fillDefault().applyOpts(optfs...)

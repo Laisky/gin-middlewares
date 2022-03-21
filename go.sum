@@ -54,8 +54,8 @@ github.com/BurntSushi/xgb v0.0.0-20160522181843-27f122750802/go.mod h1:IVnqGOEym
 github.com/DataDog/datadog-go v3.2.0+incompatible/go.mod h1:LButxg5PwREeZtORoXG3tL4fMGNddJ+vMq1mwgfaqoQ=
 github.com/Laisky/fast-skiplist v0.0.0-20210907063351-e00546c800a6 h1:V3MNilKNjNVKwBiMLsDCa6dFbA5gROE7TYxJJBXkwTc=
 github.com/Laisky/fast-skiplist v0.0.0-20210907063351-e00546c800a6/go.mod h1:BdpS7FU5kzp0QV/dtCWheAV5rIOQu+Jb+uoVuVWZOvU=
-github.com/Laisky/gin-middlewares v1.3.1-0.20220222090315-3bb5d00f8eea h1:FmW4fmAcdmK5Rtm9/9iDLVUIbmdXXv5AXPNijS99tW4=
-github.com/Laisky/gin-middlewares v1.3.1-0.20220222090315-3bb5d00f8eea/go.mod h1:5YEfsx/7DWcHQfLndkIToMGi/OMkJLZ8istV0OsXxTk=
+github.com/Laisky/gin-middlewares v1.3.1-0.20220301102338-cfe565ad26ac h1:nVxncJCqdRW8A1O7LpqgFz09HK0fjTi21++nyRV/IHo=
+github.com/Laisky/gin-middlewares v1.3.1-0.20220301102338-cfe565ad26ac/go.mod h1:5YEfsx/7DWcHQfLndkIToMGi/OMkJLZ8istV0OsXxTk=
 github.com/Laisky/go-chaining v0.0.0-20180507092046-43dcdc5a21be h1:7Rxhm6IjOtDAyj8eScOFntevwzkWhx94zi48lxo4m4w=
 github.com/Laisky/go-chaining v0.0.0-20180507092046-43dcdc5a21be/go.mod h1:1mdzaETo0kjvCQICPSePsoaatJN4l7JvEA1200lyevo=
 github.com/Laisky/go-utils v1.16.1-0.20220222085251-164a572b2f51/go.mod h1:mBoXocx7NVH+thK1gmE2s7bNe7aehA/X8YUGogk0Y0w=

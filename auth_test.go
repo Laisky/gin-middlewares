@@ -27,7 +27,7 @@ func ExampleAuth() {
 		utils.Logger.Info("user validate", zap.String("uid", uc.Subject))
 	}
 
-	if err = auth.SetLoginCookie(ctx, uc); err != nil {
+	if _, err = auth.SetLoginCookie(ctx, WithAuthClaims(uc)); err != nil {
 		utils.Logger.Error("try to set cookie got error", zap.Error(err))
 	}
 

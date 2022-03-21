@@ -167,42 +167,9 @@ func WithAuthToken(token string) AuthCookieOptFunc {
 }
 
 // SetLoginCookie set jwt token to cookies
-//
-// Deprecated: use SetLoginCookiev2 instead
-func (a *Auth) SetLoginCookie(ctx context.Context, claims jwt.Claims, opts ...AuthCookieOptFunc) (err error) {
-	utils.Logger.Debug("SetLoginCookie")
-	ctx2 := GetGinCtxFromStdCtx(ctx)
-
-	opt := &authCookieOption{
-		maxAge:   int(a.jwtTokenExpireDuration.Seconds()),
-		path:     defaultAuthCookiePath,
-		secure:   defaultAuthCookieSecure,
-		httpOnly: defaultAuthCookieHTTPOnly,
-		host:     ctx2.Request.Host,
-	}
-	if ctx2.Request.URL.Port() != "" {
-		opt.host += ":" + ctx2.Request.URL.Port()
-	}
-
-	for _, optf := range opts {
-		if err = optf(opt); err != nil {
-			return errors.Wrap(err, "set option")
-		}
-	}
-
-	var token string
-	if opt.token, err = a.Sign(opt.claim); err != nil {
-		return err
-	}
-
-	ctx2.SetCookie(defaultAuthTokenName, token, opt.maxAge, opt.path, opt.host, opt.secure, opt.httpOnly)
-	return nil
-}
-
-// SetLoginCookiev2 set jwt token to cookies
-func (a *Auth) SetLoginCookiev2(ctx context.Context,
+func (a *Auth) SetLoginCookie(ctx context.Context,
 	opts ...AuthCookieOptFunc) (token string, err error) {
-	utils.Logger.Debug("SetLoginCookiev2")
+	utils.Logger.Debug("SetLoginCookie")
 	ctx2 := GetGinCtxFromStdCtx(ctx)
 
 	opt := &authCookieOption{

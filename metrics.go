@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"time"
 
-	utils "github.com/Laisky/go-utils"
+	utils "github.com/Laisky/go-utils/v2"
 	"github.com/Laisky/zap"
 	"github.com/gin-contrib/pprof"
 	"github.com/gin-gonic/gin"

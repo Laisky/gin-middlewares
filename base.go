@@ -4,7 +4,7 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/Laisky/go-utils"
+	"github.com/Laisky/go-utils/v2"
 	"github.com/gin-gonic/gin"
 )
 

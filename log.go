@@ -4,7 +4,7 @@ import (
 	"strconv"
 	"time"
 
-	gutils "github.com/Laisky/go-utils"
+	gutils "github.com/Laisky/go-utils/v2"
 	"github.com/Laisky/zap"
 	"github.com/gin-gonic/gin"
 )

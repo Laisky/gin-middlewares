@@ -3,7 +3,7 @@ package middlewares
 import (
 	"net/http"
 
-	"github.com/Laisky/go-utils"
+	"github.com/Laisky/go-utils/v2"
 	"github.com/Laisky/zap"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v4"

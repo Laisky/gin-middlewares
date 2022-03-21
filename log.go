@@ -10,7 +10,22 @@ import (
 )
 
 type loggerMwOpt struct {
-	colored bool
+	logger       gutils.LoggerItf
+	colored      bool
+	ctxKeyLogger string
+}
+
+func (o *loggerMwOpt) applyOpts(optfs ...LoggerMwOptFunc) *loggerMwOpt {
+	for _, optf := range optfs {
+		optf(o)
+	}
+
+	return o
+}
+
+func (o *loggerMwOpt) fillDefault() *loggerMwOpt {
+	o.logger = gutils.Logger.Named("gin-middlewares")
+	return o
 }
 
 type LoggerMwOptFunc func(opt *loggerMwOpt)
@@ -21,13 +36,26 @@ func WithLoggerMwColored() LoggerMwOptFunc {
 	}
 }
 
-// GetLoggerMiddleware middleware to logging
-func GetLoggerMiddleware(logger gutils.LoggerItf, optfs ...LoggerMwOptFunc) gin.HandlerFunc {
-	opt := new(loggerMwOpt)
-	for _, optf := range optfs {
-		optf(opt)
+func WithLoggerCtxKey(key string) LoggerMwOptFunc {
+	return func(opt *loggerMwOpt) {
+		opt.ctxKeyLogger = key
 	}
+}
 
+func WithLogger(logger gutils.LoggerItf) LoggerMwOptFunc {
+	return func(opt *loggerMwOpt) {
+		opt.logger = logger
+	}
+}
+
+// GetLoggerMiddleware get logger middleware
+//
+// Deprecated: use NewLoggerMiddleware instead
+var GetLoggerMiddleware = NewLoggerMiddleware
+
+// NewLoggerMiddleware middleware to logging
+func NewLoggerMiddleware(optfs ...LoggerMwOptFunc) gin.HandlerFunc {
+	opt := new(loggerMwOpt).fillDefault().applyOpts(optfs...)
 	return func(ctx *gin.Context) {
 		startAt := gutils.Clock.GetUTCNow()
 
@@ -39,6 +67,13 @@ func GetLoggerMiddleware(logger gutils.LoggerItf, optfs ...LoggerMwOptFunc) gin.
 		} else {
 			status = strconv.Itoa(ctx.Writer.Status()) + " " + ctx.Request.Method
 
+		}
+
+		logger := opt.logger
+		if loggeri, ok := ctx.Get(opt.ctxKeyLogger); ok {
+			if l, ok := loggeri.(gutils.LoggerItf); ok && l != nil {
+				logger = l
+			}
 		}
 
 		logger.Info(status,

@@ -5,12 +5,13 @@ import (
 	"time"
 
 	gutils "github.com/Laisky/go-utils/v2"
+	glog "github.com/Laisky/go-utils/v2/log"
 	"github.com/Laisky/zap"
 	"github.com/gin-gonic/gin"
 )
 
 type loggerMwOpt struct {
-	logger       gutils.LoggerItf
+	logger       glog.Logger
 	colored      bool
 	ctxKeyLogger string
 }
@@ -24,7 +25,7 @@ func (o *loggerMwOpt) applyOpts(optfs ...LoggerMwOptFunc) *loggerMwOpt {
 }
 
 func (o *loggerMwOpt) fillDefault() *loggerMwOpt {
-	o.logger = gutils.Logger.Named("gin-middlewares")
+	o.logger = glog.Shared.Named("gin-middlewares")
 	return o
 }
 
@@ -42,7 +43,7 @@ func WithLoggerCtxKey(key string) LoggerMwOptFunc {
 	}
 }
 
-func WithLogger(logger gutils.LoggerItf) LoggerMwOptFunc {
+func WithLogger(logger glog.Logger) LoggerMwOptFunc {
 	return func(opt *loggerMwOpt) {
 		opt.logger = logger
 	}
@@ -66,7 +67,7 @@ func NewLoggerMiddleware(optfs ...LoggerMwOptFunc) gin.HandlerFunc {
 
 		logger := opt.logger
 		if loggeri, ok := ctx.Get(opt.ctxKeyLogger); ok {
-			if l, ok := loggeri.(gutils.LoggerItf); ok && l != nil {
+			if l, ok := loggeri.(glog.Logger); ok && l != nil {
 				logger = l
 			}
 		}

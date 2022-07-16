@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"time"
 
-	utils "github.com/Laisky/go-utils/v2"
+	glog "github.com/Laisky/go-utils/v2/log"
 	"github.com/Laisky/zap"
 	"github.com/gin-contrib/pprof"
 	"github.com/gin-gonic/gin"
@@ -95,11 +95,11 @@ func NewHTTPMetricSrv(ctx context.Context, options ...MetricsOptFunc) (srv *http
 
 	go func() {
 		<-ctx.Done()
-		utils.Logger.Info("got signal to shutdown metric server")
+		glog.Shared.Info("got signal to shutdown metric server")
 		timingCtx, cancel := context.WithTimeout(context.Background(), opt.graceWait)
 		defer cancel()
 		if err := srv.Shutdown(timingCtx); err != nil {
-			utils.Logger.Error("shutdown metrics server", zap.Error(err), zap.String("addr", opt.addr))
+			glog.Shared.Error("shutdown metrics server", zap.Error(err), zap.String("addr", opt.addr))
 		}
 	}()
 

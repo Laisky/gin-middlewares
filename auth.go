@@ -5,7 +5,8 @@ import (
 	"fmt"
 	"time"
 
-	utils "github.com/Laisky/go-utils/v2"
+	gjwt "github.com/Laisky/go-utils/v2/jwt"
+	glog "github.com/Laisky/go-utils/v2/log"
 	"github.com/Laisky/zap"
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/pkg/errors"
@@ -39,7 +40,7 @@ func WithAuthCookieExpireDuration(d time.Duration) AuthOptFunc {
 }
 
 // WithAuthJWT set jwt lib
-func WithAuthJWT(jwt *utils.JWT) AuthOptFunc {
+func WithAuthJWT(jwt gjwt.JWT) AuthOptFunc {
 	return func(opt *Auth) error {
 		opt.jwt = jwt
 		return nil
@@ -49,7 +50,7 @@ func WithAuthJWT(jwt *utils.JWT) AuthOptFunc {
 // Auth JWT cookie based token generator and validator.
 // Cookie looks like <defaultAuthTokenName>:`{<defaultAuthUserIDCtxKey>: "xxxx"}`
 type Auth struct {
-	jwt                    *utils.JWT
+	jwt                    gjwt.JWT
 	jwtTokenExpireDuration time.Duration
 }
 
@@ -66,9 +67,9 @@ func NewAuth(secret []byte, opts ...AuthOptFunc) (a *Auth, err error) {
 
 	// set default jwt lib
 	if a.jwt == nil {
-		if a.jwt, err = utils.NewJWT(
-			utils.WithJWTSignMethod(utils.SignMethodHS256),
-			utils.WithJWTSecretByte(secret),
+		if a.jwt, err = gjwt.New(
+			gjwt.WithSignMethod(gjwt.SignMethodHS256),
+			gjwt.WithSecretByte(secret),
 		); err != nil {
 			return nil, errors.Wrap(err, "try to create Auth got error")
 		}
@@ -116,7 +117,7 @@ func WithAuthCookieMaxAge(maxAge int) AuthCookieOptFunc {
 
 // WithAuthCookiePath set auth cookie's path
 func WithAuthCookiePath(path string) AuthCookieOptFunc {
-	utils.Logger.Debug("set auth cookie path", zap.String("path", path))
+	glog.Shared.Debug("set auth cookie path", zap.String("path", path))
 	return func(opt *authCookieOption) error {
 		opt.path = path
 		return nil
@@ -125,7 +126,7 @@ func WithAuthCookiePath(path string) AuthCookieOptFunc {
 
 // WithAuthCookieSecure set auth cookie's secure
 func WithAuthCookieSecure(secure bool) AuthCookieOptFunc {
-	utils.Logger.Debug("set auth cookie secure", zap.Bool("secure", secure))
+	glog.Shared.Debug("set auth cookie secure", zap.Bool("secure", secure))
 	return func(opt *authCookieOption) error {
 		opt.secure = secure
 		return nil
@@ -134,7 +135,7 @@ func WithAuthCookieSecure(secure bool) AuthCookieOptFunc {
 
 // WithAuthCookieHTTPOnly set auth cookie's HTTPOnly
 func WithAuthCookieHTTPOnly(httpOnly bool) AuthCookieOptFunc {
-	utils.Logger.Debug("set auth cookie httpOnly", zap.Bool("httpOnly", httpOnly))
+	glog.Shared.Debug("set auth cookie httpOnly", zap.Bool("httpOnly", httpOnly))
 	return func(opt *authCookieOption) error {
 		opt.httpOnly = httpOnly
 		return nil
@@ -143,7 +144,7 @@ func WithAuthCookieHTTPOnly(httpOnly bool) AuthCookieOptFunc {
 
 // WithAuthCookieHost set auth cookie's host
 func WithAuthCookieHost(host string) AuthCookieOptFunc {
-	utils.Logger.Debug("set auth cookie host", zap.String("host", host))
+	glog.Shared.Debug("set auth cookie host", zap.String("host", host))
 	return func(opt *authCookieOption) error {
 		opt.host = host
 		return nil
@@ -169,7 +170,7 @@ func WithAuthToken(token string) AuthCookieOptFunc {
 // SetLoginCookie set jwt token to cookies
 func (a *Auth) SetLoginCookie(ctx context.Context,
 	opts ...AuthCookieOptFunc) (token string, err error) {
-	utils.Logger.Debug("SetLoginCookie")
+	glog.Shared.Debug("SetLoginCookie")
 	ctx2 := GetGinCtxFromStdCtx(ctx)
 
 	opt := &authCookieOption{

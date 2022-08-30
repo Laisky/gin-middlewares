@@ -4,7 +4,7 @@ import (
 	"log"
 	"time"
 
-	ginMw "github.com/Laisky/gin-middlewares"
+	ginMw "github.com/Laisky/gin-middlewares/v2"
 	"github.com/gin-gonic/gin"
 )
 

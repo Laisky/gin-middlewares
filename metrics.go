@@ -89,8 +89,10 @@ func NewHTTPMetricSrv(ctx context.Context, options ...MetricsOptFunc) (srv *http
 	router := gin.New()
 	router.Use(gin.Recovery())
 	srv = &http.Server{
-		Addr:    opt.addr,
-		Handler: router,
+		ReadTimeout:       30 * time.Second,
+		ReadHeaderTimeout: 30 * time.Second,
+		Addr:              opt.addr,
+		Handler:           router,
 	}
 
 	go func() {

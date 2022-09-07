@@ -1,10 +1,16 @@
+.PHONY: install
 install:
-	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.27.0
-	go get golang.org/x/tools/cmd/goimports
-	go get -u github.com/golang/protobuf/protoc-gen-go@v1.3.2
-	go get -u github.com/go-bindata/go-bindata
+	go install golang.org/x/vuln/cmd/govulncheck@latest
+	go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.28
+	go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.2
 
+.PHONY: lint
 lint:
 	go mod tidy
+	govulncheck ./...
+	goimports -local "github.com/Laisky/gin-middlewares" -w .
 	gofmt -s -w .
-	golangci-lint run -E golint,depguard,gocognit,goconst,gofmt,misspell
+
+	# go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+	# golangci-lint run --timeout 3m -E golint,depguard,gocognit,goconst,gofmt,misspell,exportloopref,nilerr #,gosec,lll
+	golangci-lint run -c .golangci.lint.yml

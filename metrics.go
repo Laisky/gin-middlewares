@@ -5,12 +5,12 @@ import (
 	"net/http"
 	"time"
 
+	ginprometheus "github.com/Laisky/go-gin-prometheus"
 	glog "github.com/Laisky/go-utils/v2/log"
 	"github.com/Laisky/zap"
 	"github.com/gin-contrib/pprof"
 	"github.com/gin-gonic/gin"
 	"github.com/pkg/errors"
-	ginprometheus "github.com/zsais/go-gin-prometheus"
 )
 
 var (

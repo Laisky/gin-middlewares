@@ -3,13 +3,13 @@ module github.com/Laisky/gin-middlewares/v2
 go 1.18
 
 require (
+	github.com/Laisky/go-gin-prometheus v1.0.0
 	github.com/Laisky/go-utils/v2 v2.1.3-0.20220907054848-2d14db0f6fe4
 	github.com/Laisky/zap v1.19.3-0.20220902144311-ba5bb1d3eb31
 	github.com/gin-contrib/pprof v1.4.0
 	github.com/gin-gonic/gin v1.8.1
 	github.com/golang-jwt/jwt/v4 v4.4.2
 	github.com/pkg/errors v0.9.1
-	github.com/zsais/go-gin-prometheus v0.1.0
 )
 
 require (

@@ -1,4 +1,4 @@
-// Package main standalone router
+// Package main run metric server as gin's router
 package main
 
 import (

@@ -1,3 +1,4 @@
+// Package main run metric server
 package main
 
 import (

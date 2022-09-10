@@ -2,7 +2,7 @@ package middlewares
 
 import (
 	"context"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"strings"
 	"sync"
@@ -53,7 +53,7 @@ func TestMetricsSrv(t *testing.T) {
 		if err != nil {
 			t.Fatalf("request: %+v", err)
 		}
-		body, err := ioutil.ReadAll(resp.Body)
+		body, err := io.ReadAll(resp.Body)
 		if err != nil {
 			t.Fatalf("read body: %+v", err)
 		}

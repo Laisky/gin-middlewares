@@ -1,3 +1,4 @@
+// Package middlewares some useful middlewares for gin
 package middlewares
 
 import (

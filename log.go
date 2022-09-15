@@ -29,20 +29,24 @@ func (o *loggerMwOpt) fillDefault() *loggerMwOpt {
 	return o
 }
 
+// LoggerMwOptFunc logger options
 type LoggerMwOptFunc func(opt *loggerMwOpt)
 
+// WithLoggerMwColored enable coloered log
 func WithLoggerMwColored() LoggerMwOptFunc {
 	return func(opt *loggerMwOpt) {
 		opt.colored = true
 	}
 }
 
+// WithLoggerCtxKey embedded logger into context
 func WithLoggerCtxKey(key string) LoggerMwOptFunc {
 	return func(opt *loggerMwOpt) {
 		opt.ctxKeyLogger = key
 	}
 }
 
+// WithLogger set default logger
 func WithLogger(logger glog.Logger) LoggerMwOptFunc {
 	return func(opt *loggerMwOpt) {
 		opt.logger = logger

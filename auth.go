@@ -9,6 +9,7 @@ import (
 	gjwt "github.com/Laisky/go-utils/v2/jwt"
 	glog "github.com/Laisky/go-utils/v2/log"
 	"github.com/Laisky/zap"
+	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/pkg/errors"
 )
@@ -82,6 +83,7 @@ func NewAuth(secret []byte, opts ...AuthOptFunc) (a *Auth, err error) {
 // GetUserClaims get token from request.ctx then validate and return userid
 func (a *Auth) GetUserClaims(ctx context.Context, claims jwt.Claims) (err error) {
 	var token string
+
 	if token, err = GetGinCtxFromStdCtx(ctx).Cookie(defaultAuthTokenName); err != nil {
 		return errors.New("jwt token not found")
 	}
@@ -94,11 +96,38 @@ func (a *Auth) GetUserClaims(ctx context.Context, claims jwt.Claims) (err error)
 }
 
 type authCookieOption struct {
-	maxAge           int
-	path, host       string
-	secure, httpOnly bool
-	claim            jwt.Claims
-	token            string
+	cookieMaxAge                 int
+	cookiePath, cookieHost       string
+	cookieSecure, cookieHttpOnly bool
+	claim                        jwt.Claims
+	token                        string
+	header, headerFormat         string
+}
+
+func (o *authCookieOption) fillDefault(ctx *gin.Context) *authCookieOption {
+	o.cookieMaxAge = int(defaultAuthJWTTokenExpireDuration.Seconds())
+	o.cookiePath = defaultAuthCookiePath
+	o.cookieSecure = defaultAuthCookieSecure
+	o.cookieHttpOnly = defaultAuthCookieHTTPOnly
+	o.cookieHost = ctx.Request.Host
+	o.header = "Authorization"
+	o.headerFormat = "Bearer %s"
+
+	if ctx.Request.URL.Port() != "" {
+		o.cookieHost += ":" + ctx.Request.URL.Port()
+	}
+
+	return o
+}
+
+func (o *authCookieOption) applyOpts(opts ...AuthCookieOptFunc) (*authCookieOption, error) {
+	for _, f := range opts {
+		if err := f(o); err != nil {
+			return nil, errors.Wrap(err, "apply auth options")
+		}
+	}
+
+	return o, nil
 }
 
 // AuthCookieOptFunc auth cookie options
@@ -111,7 +140,7 @@ func WithAuthCookieMaxAge(maxAge int) AuthCookieOptFunc {
 			return fmt.Errorf("maxAge should not less than 0, got %v", maxAge)
 		}
 
-		opt.maxAge = maxAge
+		opt.cookieMaxAge = maxAge
 		return nil
 	}
 }
@@ -120,7 +149,7 @@ func WithAuthCookieMaxAge(maxAge int) AuthCookieOptFunc {
 func WithAuthCookiePath(path string) AuthCookieOptFunc {
 	glog.Shared.Debug("set auth cookie path", zap.String("path", path))
 	return func(opt *authCookieOption) error {
-		opt.path = path
+		opt.cookiePath = path
 		return nil
 	}
 }
@@ -129,7 +158,7 @@ func WithAuthCookiePath(path string) AuthCookieOptFunc {
 func WithAuthCookieSecure(secure bool) AuthCookieOptFunc {
 	glog.Shared.Debug("set auth cookie secure", zap.Bool("secure", secure))
 	return func(opt *authCookieOption) error {
-		opt.secure = secure
+		opt.cookieSecure = secure
 		return nil
 	}
 }
@@ -138,7 +167,7 @@ func WithAuthCookieSecure(secure bool) AuthCookieOptFunc {
 func WithAuthCookieHTTPOnly(httpOnly bool) AuthCookieOptFunc {
 	glog.Shared.Debug("set auth cookie httpOnly", zap.Bool("httpOnly", httpOnly))
 	return func(opt *authCookieOption) error {
-		opt.httpOnly = httpOnly
+		opt.cookieHttpOnly = httpOnly
 		return nil
 	}
 }
@@ -147,7 +176,7 @@ func WithAuthCookieHTTPOnly(httpOnly bool) AuthCookieOptFunc {
 func WithAuthCookieHost(host string) AuthCookieOptFunc {
 	glog.Shared.Debug("set auth cookie host", zap.String("host", host))
 	return func(opt *authCookieOption) error {
-		opt.host = host
+		opt.cookieHost = host
 		return nil
 	}
 }
@@ -168,43 +197,71 @@ func WithAuthToken(token string) AuthCookieOptFunc {
 	}
 }
 
-// SetLoginCookie set jwt token to cookies
+// SetLoginCookie
+//
+// Deprecated: use SetAuthCookie instead
 func (a *Auth) SetLoginCookie(ctx context.Context,
 	opts ...AuthCookieOptFunc) (token string, err error) {
-	glog.Shared.Debug("SetLoginCookie")
-	ctx2 := GetGinCtxFromStdCtx(ctx)
+	return a.SetAuthCookie(ctx, opts...)
+}
 
-	opt := &authCookieOption{
-		maxAge:   int(a.jwtTokenExpireDuration.Seconds()),
-		path:     defaultAuthCookiePath,
-		secure:   defaultAuthCookieSecure,
-		httpOnly: defaultAuthCookieHTTPOnly,
-		host:     ctx2.Request.Host,
-	}
-	if ctx2.Request.URL.Port() != "" {
-		opt.host += ":" + ctx2.Request.URL.Port()
-	}
+// SetLoginCookie set jwt token to cookies
+func (a *Auth) SetAuthCookie(ctx context.Context,
+	opts ...AuthCookieOptFunc) (token string, err error) {
+	ginCtx := GetGinCtxFromStdCtx(ctx)
 
-	for _, optf := range opts {
-		if err = optf(opt); err != nil {
-			return "", errors.Wrap(err, "set option")
-		}
+	opt, err := a.process(ginCtx, opts...)
+	if err != nil {
+		return "", errors.Wrap(err, "process auth")
 	}
 
-	if opt.claim == nil && opt.token == "" {
-		return "", errors.New("claim or token should be set")
-	} else if opt.claim != nil && opt.token != "" {
-		return "", errors.New("claim and token should not be set at the same time")
-	}
-
-	if opt.claim != nil {
-		if opt.token, err = a.Sign(opt.claim); err != nil {
-			return "", err
-		}
-	}
-
-	ctx2.SetCookie(defaultAuthTokenName, opt.token, opt.maxAge, opt.path, opt.host, opt.secure, opt.httpOnly)
+	ginCtx.SetCookie(defaultAuthTokenName,
+		opt.token,
+		opt.cookieMaxAge,
+		opt.cookiePath,
+		opt.cookieHost,
+		opt.cookieSecure,
+		opt.cookieHttpOnly)
 	return opt.token, nil
+}
+
+// SetAuthHeader set jwt token to cookies
+func (a *Auth) SetAuthHeader(ctx context.Context,
+	opts ...AuthCookieOptFunc) (token string, err error) {
+	ginCtx := GetGinCtxFromStdCtx(ctx)
+
+	opt, err := a.process(ginCtx, opts...)
+	if err != nil {
+		return "", errors.Wrap(err, "process auth")
+	}
+
+	ginCtx.Header(opt.header, fmt.Sprintf(opt.headerFormat, opt.token))
+	return opt.token, nil
+}
+
+func (a *Auth) process(ginCtx *gin.Context,
+	opts ...AuthCookieOptFunc) (opt *authCookieOption, err error) {
+	opt, err = new(authCookieOption).fillDefault(ginCtx).applyOpts(opts...)
+	if err != nil {
+		return nil, errors.Wrap(err, "apply options")
+	}
+
+	// generate jwt token
+	{
+		if opt.claim == nil && opt.token == "" {
+			return nil, errors.New("claim or token should be set")
+		} else if opt.claim != nil && opt.token != "" {
+			return nil, errors.New("claim and token should not be set at the same time")
+		}
+
+		if opt.claim != nil {
+			if opt.token, err = a.Sign(opt.claim); err != nil {
+				return opt, err
+			}
+		}
+	}
+
+	return opt, nil
 }
 
 // Sign sign jwt token

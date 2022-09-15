@@ -4,6 +4,7 @@ package middlewares
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	gjwt "github.com/Laisky/go-utils/v2/jwt"
 	"github.com/golang-jwt/jwt/v4"
@@ -12,7 +13,8 @@ import (
 
 const (
 	authHeaderName   = "Authorization"
-	authHeaderLayout = "Bearer %s"
+	authHeaderPrefix = "Bearer"
+	authHeaderLayout = authHeaderPrefix + " %s"
 )
 
 // AuthOptFunc auth option
@@ -57,6 +59,9 @@ func NewAuth(secret []byte, opts ...AuthOptFunc) (a *Auth, err error) {
 // GetUserClaims get token from request.ctx then validate and return userid
 func (a *Auth) GetUserClaims(ctx context.Context, claims jwt.Claims) (err error) {
 	token := GetGinCtxFromStdCtx(ctx).GetHeader(authHeaderName)
+	if strings.HasPrefix(token, authHeaderPrefix) { // remove "Bearer "
+		token = token[len(authHeaderPrefix)+1:]
+	}
 
 	if err = a.jwt.ParseClaims(token, claims); err != nil {
 		return errors.Wrap(err, "token invalidate")

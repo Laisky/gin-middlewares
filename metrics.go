@@ -6,7 +6,6 @@ import (
 	"time"
 
 	ginprometheus "github.com/Laisky/go-gin-prometheus"
-	glog "github.com/Laisky/go-utils/v2/log"
 	"github.com/Laisky/zap"
 	"github.com/gin-contrib/pprof"
 	"github.com/gin-gonic/gin"
@@ -97,11 +96,11 @@ func NewHTTPMetricSrv(ctx context.Context, options ...MetricsOptFunc) (srv *http
 
 	go func() {
 		<-ctx.Done()
-		glog.Shared.Info("got signal to shutdown metric server")
+		Logger.Info("got signal to shutdown metric server")
 		timingCtx, cancel := context.WithTimeout(context.Background(), opt.graceWait)
 		defer cancel()
 		if err := srv.Shutdown(timingCtx); err != nil {
-			glog.Shared.Error("shutdown metrics server", zap.Error(err), zap.String("addr", opt.addr))
+			Logger.Error("shutdown metrics server", zap.Error(err), zap.String("addr", opt.addr))
 		}
 	}()
 

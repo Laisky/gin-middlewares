@@ -1,4 +1,4 @@
-module github.com/Laisky/gin-middlewares/v2
+module github.com/Laisky/gin-middlewares/v3
 
 go 1.18
 

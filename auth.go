@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"strings"
 
-	gjwt "github.com/Laisky/go-utils/v2/jwt"
+	gjwt "github.com/Laisky/go-utils/v3/jwt"
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/pkg/errors"
 )

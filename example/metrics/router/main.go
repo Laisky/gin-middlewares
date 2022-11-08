@@ -7,7 +7,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	ginMw "github.com/Laisky/gin-middlewares/v3"
+	ginMw "github.com/Laisky/gin-middlewares/v4"
 )
 
 func main() {

@@ -5,12 +5,13 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/Laisky/go-utils/v3"
 	"github.com/gin-gonic/gin"
 )
 
+type ctxkey string
+
 // GinCtxKey key of gin ctx that saved in request.context
-var GinCtxKey utils.CtxKeyT
+var GinCtxKey ctxkey = "gin"
 
 // FromStd convert std handler to gin.Handler, with gin context embedded
 func FromStd(handler http.HandlerFunc) gin.HandlerFunc {

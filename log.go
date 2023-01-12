@@ -95,7 +95,7 @@ func NewLoggerMiddleware(optfs ...LoggerMwOptFunc) gin.HandlerFunc {
 			zap.String("remote", ctx.Request.RemoteAddr),
 			zap.String("host", ctx.Request.Host),
 			zap.Int("size", ctx.Writer.Size()),
-			zap.Duration("latency_ms", time.Since(startAt)*1000),
+			zap.String("cost", gutils.CostSecs(time.Since(startAt))),
 		}
 		switch opt.level {
 		case glog.LevelInfo:

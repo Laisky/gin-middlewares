@@ -5,15 +5,17 @@ import (
 	"time"
 
 	gutils "github.com/Laisky/go-utils/v3"
-	log "github.com/Laisky/go-utils/v3/log"
+	glog "github.com/Laisky/go-utils/v3/log"
 	"github.com/Laisky/zap"
+	"github.com/Laisky/zap/zapcore"
 	"github.com/gin-gonic/gin"
 )
 
 type loggerMwOpt struct {
-	logger       log.Logger
+	logger       glog.Logger
 	colored      bool
 	ctxKeyLogger string
+	level        glog.Level
 }
 
 func (o *loggerMwOpt) applyOpts(optfs ...LoggerMwOptFunc) *loggerMwOpt {
@@ -26,6 +28,7 @@ func (o *loggerMwOpt) applyOpts(optfs ...LoggerMwOptFunc) *loggerMwOpt {
 
 func (o *loggerMwOpt) fillDefault() *loggerMwOpt {
 	o.logger = Logger.Named("gin-middlewares")
+	o.level = glog.LevelDebug
 	return o
 }
 
@@ -46,8 +49,19 @@ func WithLoggerCtxKey(key string) LoggerMwOptFunc {
 	}
 }
 
+// WithLevel (optional) set log level
+//
+// only support debug/info
+//
+// default to debug
+func WithLevel(level glog.Level) LoggerMwOptFunc {
+	return func(opt *loggerMwOpt) {
+		opt.level = level
+	}
+}
+
 // WithLogger set default logger
-func WithLogger(logger log.Logger) LoggerMwOptFunc {
+func WithLogger(logger glog.Logger) LoggerMwOptFunc {
 	return func(opt *loggerMwOpt) {
 		opt.logger = logger
 	}
@@ -71,18 +85,24 @@ func NewLoggerMiddleware(optfs ...LoggerMwOptFunc) gin.HandlerFunc {
 
 		logger := opt.logger
 		if loggeri, ok := ctx.Get(opt.ctxKeyLogger); ok {
-			if l, ok := loggeri.(log.Logger); ok && l != nil {
+			if l, ok := loggeri.(glog.Logger); ok && l != nil {
 				logger = l
 			}
 		}
 
-		logger.Info(status,
+		fields := []zapcore.Field{
 			zap.String("url", ctx.Request.URL.String()),
 			zap.String("remote", ctx.Request.RemoteAddr),
 			zap.String("host", ctx.Request.Host),
 			zap.Int("size", ctx.Writer.Size()),
 			zap.Duration("latency_ms", time.Since(startAt)*1000),
-		)
+		}
+		switch opt.level {
+		case glog.LevelInfo:
+			logger.Info(status, fields...)
+		default:
+			logger.Debug(status, fields...)
+		}
 	}
 }
 

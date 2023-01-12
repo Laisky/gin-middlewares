@@ -3,17 +3,16 @@ module github.com/Laisky/gin-middlewares/v4
 go 1.19
 
 require (
+	github.com/Laisky/errors v0.9.2-0.20221107084216-4b771a197718
 	github.com/Laisky/go-gin-prometheus v1.0.0
-	github.com/Laisky/go-utils/v3 v3.0.0
+	github.com/Laisky/go-utils/v3 v3.1.5-0.20230110081848-1093d2c06c6f
 	github.com/Laisky/zap v1.19.3-0.20220902144311-ba5bb1d3eb31
 	github.com/gin-contrib/pprof v1.4.0
 	github.com/gin-gonic/gin v1.8.1
 	github.com/golang-jwt/jwt/v4 v4.4.2
-	github.com/pkg/errors v0.9.1
 )
 
 require (
-	github.com/Laisky/errors v0.9.2-0.20221107084216-4b771a197718 // indirect
 	github.com/Laisky/go-chaining v0.0.0-20180507092046-43dcdc5a21be // indirect
 	github.com/Laisky/graphql v1.0.5 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect

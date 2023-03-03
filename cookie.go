@@ -3,7 +3,7 @@ package middlewares
 import (
 	"fmt"
 
-	"github.com/Laisky/errors"
+	"github.com/Laisky/errors/v2"
 	"github.com/Laisky/zap"
 	"github.com/gin-gonic/gin"
 )

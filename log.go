@@ -4,8 +4,8 @@ import (
 	"strconv"
 	"time"
 
-	gutils "github.com/Laisky/go-utils/v3"
-	glog "github.com/Laisky/go-utils/v3/log"
+	gutils "github.com/Laisky/go-utils/v4"
+	glog "github.com/Laisky/go-utils/v4/log"
 	"github.com/Laisky/zap"
 	"github.com/Laisky/zap/zapcore"
 	"github.com/gin-gonic/gin"

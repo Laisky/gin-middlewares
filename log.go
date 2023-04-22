@@ -11,11 +11,17 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// LoggerInterface logger interface
+type LoggerInterface interface {
+	Debug(msg string, fields ...zapcore.Field)
+	Info(msg string, fields ...zapcore.Field)
+}
+
 type loggerMwOpt struct {
-	logger       glog.Logger
+	logger       LoggerInterface
 	colored      bool
 	ctxKeyLogger string
-	level        glog.Level
+	level        string
 }
 
 func (o *loggerMwOpt) applyOpts(optfs ...LoggerMwOptFunc) *loggerMwOpt {
@@ -28,7 +34,7 @@ func (o *loggerMwOpt) applyOpts(optfs ...LoggerMwOptFunc) *loggerMwOpt {
 
 func (o *loggerMwOpt) fillDefault() *loggerMwOpt {
 	o.logger = Logger.Named("gin-middlewares")
-	o.level = glog.LevelDebug
+	o.level = glog.LevelDebug.String()
 	return o
 }
 
@@ -54,14 +60,14 @@ func WithLoggerCtxKey(key string) LoggerMwOptFunc {
 // only support debug/info
 //
 // default to debug
-func WithLevel(level glog.Level) LoggerMwOptFunc {
+func WithLevel(level string) LoggerMwOptFunc {
 	return func(opt *loggerMwOpt) {
 		opt.level = level
 	}
 }
 
 // WithLogger set default logger
-func WithLogger(logger glog.Logger) LoggerMwOptFunc {
+func WithLogger(logger LoggerInterface) LoggerMwOptFunc {
 	return func(opt *loggerMwOpt) {
 		opt.logger = logger
 	}
@@ -85,7 +91,7 @@ func NewLoggerMiddleware(optfs ...LoggerMwOptFunc) gin.HandlerFunc {
 
 		logger := opt.logger
 		if loggeri, ok := ctx.Get(opt.ctxKeyLogger); ok {
-			if l, ok := loggeri.(glog.Logger); ok && l != nil {
+			if l, ok := loggeri.(LoggerInterface); ok && l != nil {
 				logger = l
 			}
 		}
@@ -98,7 +104,7 @@ func NewLoggerMiddleware(optfs ...LoggerMwOptFunc) gin.HandlerFunc {
 			zap.String("cost", gutils.CostSecs(time.Since(startAt))),
 		}
 		switch opt.level {
-		case glog.LevelInfo:
+		case string(glog.LevelInfo):
 			logger.Info(status, fields...)
 		default:
 			logger.Debug(status, fields...)

@@ -129,10 +129,9 @@ func NewLoggerMiddleware(optfs ...LoggerMwOptFunc) gin.HandlerFunc {
 		}
 
 		SetLogger(ctx, logger)
-		ctx.Next()
-
 		ctx.Header(defaultCtxKeyTraceID, TraceID(ctx))
 		ctx.Header(defaultCtxKeySpanID, SpanID(ctx))
+		ctx.Next()
 
 		logger = logger.With(zap.String("response_size",
 			gutils.HumanReadableByteCount(int64(ctx.Writer.Size()), true)))

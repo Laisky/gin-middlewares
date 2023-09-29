@@ -1,6 +1,7 @@
 package middlewares
 
 import (
+	"net/http"
 	"strconv"
 	"time"
 
@@ -114,17 +115,27 @@ func NewLoggerMiddleware(optfs ...LoggerMwOptFunc) gin.HandlerFunc {
 			zap.String("host", ctx.Request.Host),
 			zap.String("trace_id", TraceID(ctx)),
 			zap.String("span_id", SpanID(ctx)),
-			zap.Int64("request_size", ctx.Request.ContentLength),
 			zap.String("cost", gutils.CostSecs(time.Since(startAt))),
 		)
-		SetLogger(ctx, logger)
 
+		// only log request size when method is not GET/HEAD/OPTIONS
+		if !gutils.Contains([]string{
+			http.MethodHead, http.MethodGet, http.MethodOptions,
+		}, ctx.Request.Method) {
+			logger = logger.With(
+				zap.String("request_size",
+					gutils.HumanReadableByteCount(ctx.Request.ContentLength, true)),
+			)
+		}
+
+		SetLogger(ctx, logger)
 		ctx.Next()
 
 		ctx.Writer.Header().Set(defaultCtxKeyTraceID, TraceID(ctx))
 		ctx.Writer.Header().Set(defaultCtxKeySpanID, SpanID(ctx))
 
-		logger = logger.With(zap.Int("response_size", ctx.Writer.Size()))
+		logger = logger.With(zap.String("response_size",
+			gutils.HumanReadableByteCount(ctx.Writer.Size())))
 		var status string
 		if opt.colored {
 			status = coloredStatus(ctx)

@@ -24,10 +24,6 @@ func TraceID(ctx *gin.Context) string {
 func SpanID(ctx *gin.Context) string {
 	val := ctx.GetString(defaultCtxKeySpanID)
 	if val == "" {
-		val = ctx.Request.Header.Get(defaultCtxKeySpanID)
-	}
-
-	if val == "" {
 		val = gutils.UUID1()
 	}
 

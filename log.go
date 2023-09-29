@@ -114,6 +114,7 @@ func NewLoggerMiddleware(optfs ...LoggerMwOptFunc) gin.HandlerFunc {
 			zap.String("host", ctx.Request.Host),
 			zap.String("trace_id", TraceID(ctx)),
 			zap.String("span_id", SpanID(ctx)),
+			zap.Int64("request_size", ctx.Request.ContentLength),
 			zap.String("cost", gutils.CostSecs(time.Since(startAt))),
 		)
 		SetLogger(ctx, logger)

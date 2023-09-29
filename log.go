@@ -7,21 +7,26 @@ import (
 	gutils "github.com/Laisky/go-utils/v4"
 	glog "github.com/Laisky/go-utils/v4/log"
 	"github.com/Laisky/zap"
-	"github.com/Laisky/zap/zapcore"
 	"github.com/gin-gonic/gin"
 )
 
+const (
+	defaultCtxKeyLogger  = "gmw-logger"
+	defaultCtxKeyTraceID = "uber-trace-id"
+	defaultCtxKeySpanID  = "uber-span-id"
+)
+
 // LoggerInterface logger interface
-type LoggerInterface interface {
-	Debug(msg string, fields ...zapcore.Field)
-	Info(msg string, fields ...zapcore.Field)
-}
+// type LoggerInterface interface {
+// 	Debug(msg string, fields ...zapcore.Field)
+// 	Info(msg string, fields ...zapcore.Field)
+// }
 
 type loggerMwOpt struct {
-	logger       LoggerInterface
-	colored      bool
-	ctxKeyLogger string
-	level        string
+	logger                                    glog.Logger
+	colored                                   bool
+	ctxKeyLogger, ctxKeyTraceID, ctxKeySpanID string
+	level                                     string
 }
 
 func (o *loggerMwOpt) applyOpts(optfs ...LoggerMwOptFunc) *loggerMwOpt {
@@ -35,6 +40,9 @@ func (o *loggerMwOpt) applyOpts(optfs ...LoggerMwOptFunc) *loggerMwOpt {
 func (o *loggerMwOpt) fillDefault() *loggerMwOpt {
 	o.logger = Logger.Named("gin-middlewares")
 	o.level = glog.LevelDebug.String()
+	o.ctxKeyLogger = defaultCtxKeyLogger
+	o.ctxKeySpanID = defaultCtxKeySpanID
+	o.ctxKeyTraceID = defaultCtxKeyTraceID
 	return o
 }
 
@@ -49,9 +57,23 @@ func WithLoggerMwColored() LoggerMwOptFunc {
 }
 
 // WithLoggerCtxKey embedded logger into context
-func WithLoggerCtxKey(key string) LoggerMwOptFunc {
+// func WithLoggerCtxKey(key string) LoggerMwOptFunc {
+// 	return func(opt *loggerMwOpt) {
+// 		opt.ctxKeyLogger = key
+// 	}
+// }
+
+// WithTraceIDCtxKey embedded traceID into context
+func WithTraceIDCtxKey(key string) LoggerMwOptFunc {
 	return func(opt *loggerMwOpt) {
-		opt.ctxKeyLogger = key
+		opt.ctxKeyTraceID = key
+	}
+}
+
+// WithSpanIDCtxKey embedded spanID into context
+func WithSpanIDCtxKey(key string) LoggerMwOptFunc {
+	return func(opt *loggerMwOpt) {
+		opt.ctxKeySpanID = key
 	}
 }
 
@@ -67,7 +89,7 @@ func WithLevel(level string) LoggerMwOptFunc {
 }
 
 // WithLogger set default logger
-func WithLogger(logger LoggerInterface) LoggerMwOptFunc {
+func WithLogger(logger glog.Logger) LoggerMwOptFunc {
 	return func(opt *loggerMwOpt) {
 		opt.logger = logger
 	}
@@ -79,35 +101,38 @@ func NewLoggerMiddleware(optfs ...LoggerMwOptFunc) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		startAt := gutils.Clock.GetUTCNow()
 
+		// get logger
+		logger := opt.logger
+		if loggeri, ok := ctx.Get(opt.ctxKeyLogger); ok {
+			if l, ok := loggeri.(glog.Logger); ok && l != nil {
+				logger = l
+			}
+		}
+		logger = logger.With(
+			zap.String("url", ctx.Request.URL.String()),
+			zap.String("remote", ctx.Request.RemoteAddr),
+			zap.String("host", ctx.Request.Host),
+			zap.String("trace_id", TraceID(ctx)),
+			zap.String("span_id", SpanID(ctx)),
+			zap.String("cost", gutils.CostSecs(time.Since(startAt))),
+		)
+		SetLogger(ctx, logger)
+
 		ctx.Next()
 
+		logger = logger.With(zap.Int("response_size", ctx.Writer.Size()))
 		var status string
 		if opt.colored {
 			status = coloredStatus(ctx)
 		} else {
 			status = strconv.Itoa(ctx.Writer.Status()) + " " + ctx.Request.Method
-
 		}
 
-		logger := opt.logger
-		if loggeri, ok := ctx.Get(opt.ctxKeyLogger); ok {
-			if l, ok := loggeri.(LoggerInterface); ok && l != nil {
-				logger = l
-			}
-		}
-
-		fields := []zapcore.Field{
-			zap.String("url", ctx.Request.URL.String()),
-			zap.String("remote", ctx.Request.RemoteAddr),
-			zap.String("host", ctx.Request.Host),
-			zap.Int("size", ctx.Writer.Size()),
-			zap.String("cost", gutils.CostSecs(time.Since(startAt))),
-		}
 		switch opt.level {
 		case string(glog.LevelInfo):
-			logger.Info(status, fields...)
+			logger.Info(status)
 		default:
-			logger.Debug(status, fields...)
+			logger.Debug(status)
 		}
 	}
 }
@@ -127,4 +152,20 @@ func coloredStatus(ctx *gin.Context) string {
 	}
 
 	return codeStr
+}
+
+// GetLogger get logger from context
+func GetLogger(ctx *gin.Context) (logger glog.Logger) {
+	if loggeri, ok := ctx.Get(defaultCtxKeyLogger); ok {
+		if logger, ok := loggeri.(glog.Logger); ok && logger != nil {
+			return logger
+		}
+	}
+
+	return glog.Shared.Named("gin")
+}
+
+// SetLogger set logger into context
+func SetLogger(ctx *gin.Context, logger glog.Logger) {
+	ctx.Set(defaultCtxKeyLogger, logger)
 }

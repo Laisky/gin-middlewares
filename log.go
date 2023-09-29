@@ -135,7 +135,7 @@ func NewLoggerMiddleware(optfs ...LoggerMwOptFunc) gin.HandlerFunc {
 		ctx.Writer.Header().Set(defaultCtxKeySpanID, SpanID(ctx))
 
 		logger = logger.With(zap.String("response_size",
-			gutils.HumanReadableByteCount(ctx.Writer.Size())))
+			gutils.HumanReadableByteCount(int64(ctx.Writer.Size()), true)))
 		var status string
 		if opt.colored {
 			status = coloredStatus(ctx)

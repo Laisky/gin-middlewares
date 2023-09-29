@@ -120,6 +120,9 @@ func NewLoggerMiddleware(optfs ...LoggerMwOptFunc) gin.HandlerFunc {
 
 		ctx.Next()
 
+		ctx.Writer.Header().Set(defaultCtxKeyTraceID, TraceID(ctx))
+		ctx.Writer.Header().Set(defaultCtxKeySpanID, SpanID(ctx))
+
 		logger = logger.With(zap.Int("response_size", ctx.Writer.Size()))
 		var status string
 		if opt.colored {

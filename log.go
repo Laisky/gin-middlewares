@@ -1,6 +1,7 @@
 package middlewares
 
 import (
+	"context"
 	"net/http"
 	"strconv"
 	"time"
@@ -169,8 +170,16 @@ func coloredStatus(ctx *gin.Context) string {
 }
 
 // GetLogger get logger from context
-func GetLogger(ctx *gin.Context) (logger glog.Logger) {
-	if loggeri, ok := ctx.Get(defaultCtxKeyLogger); ok {
+func GetLogger(ctx context.Context) (logger glog.Logger) {
+	if gctx, ok := ctx.(*gin.Context); ok && gctx != nil {
+		if loggeri, ok := gctx.Get(defaultCtxKeyLogger); ok && loggeri != nil {
+			if logger, ok := loggeri.(glog.Logger); ok && logger != nil {
+				return logger
+			}
+		}
+	}
+
+	if loggeri := ctx.Value(defaultCtxKeyLogger); loggeri != nil {
 		if logger, ok := loggeri.(glog.Logger); ok && logger != nil {
 			return logger
 		}
@@ -180,6 +189,14 @@ func GetLogger(ctx *gin.Context) (logger glog.Logger) {
 }
 
 // SetLogger set logger into context
-func SetLogger(ctx *gin.Context, logger glog.Logger) {
-	ctx.Set(defaultCtxKeyLogger, logger)
+func SetLogger(ctx context.Context, logger glog.Logger) context.Context {
+	if gctx, ok := ctx.(*gin.Context); ok && gctx != nil {
+		gctx.Set(defaultCtxKeyLogger, logger)
+		if gctx.Request != nil {
+			ctx = gctx.Request.Context()
+		}
+	}
+
+	ctx = context.WithValue(ctx, defaultCtxKeyLogger, logger)
+	return ctx
 }

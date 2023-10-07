@@ -1,6 +1,7 @@
 package middlewares
 
 import (
+	"github.com/Laisky/errors/v2"
 	gutils "github.com/Laisky/go-utils/v4"
 	"github.com/gin-gonic/gin"
 )
@@ -14,7 +15,7 @@ func TraceID(ctx *gin.Context) (gutils.JaegerTracingID, error) {
 
 	if val == "" {
 		if tid, err := gutils.NewJaegerTracingID(0, 0, 0, 0); err != nil {
-			return tid, err
+			return tid, errors.Wrap(err, "new trace id")
 		} else {
 			val = tid.String()
 		}

@@ -96,6 +96,7 @@ func NewLoggerMiddleware(optfs ...LoggerMwOptFunc) gin.HandlerFunc {
 		var traceID string
 		if tid, err := TraceID(ctx); err != nil {
 			opt.logger.Error("failed to get traceID", zap.Error(err))
+		} else {
 			traceID = tid.String()
 		}
 

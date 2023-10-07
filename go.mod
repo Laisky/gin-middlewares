@@ -5,7 +5,7 @@ go 1.20
 require (
 	github.com/Laisky/errors/v2 v2.0.1
 	github.com/Laisky/go-gin-prometheus v1.0.0
-	github.com/Laisky/go-utils/v4 v4.5.2
+	github.com/Laisky/go-utils/v4 v4.5.3-0.20231007034844-0e17fe3e4a58
 	github.com/Laisky/zap v1.25.1
 	github.com/gin-contrib/pprof v1.4.0
 	github.com/gin-gonic/gin v1.9.1

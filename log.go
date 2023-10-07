@@ -13,9 +13,7 @@ import (
 )
 
 const (
-	defaultCtxKeyLogger  = "gmw-logger"
-	defaultCtxKeyTraceID = "uber-trace-id"
-	defaultCtxKeySpanID  = "uber-span-id"
+	defaultCtxKeyLogger = "gmw-logger"
 )
 
 // LoggerInterface logger interface
@@ -25,10 +23,10 @@ const (
 // }
 
 type loggerMwOpt struct {
-	logger                                    glog.Logger
-	colored                                   bool
-	ctxKeyLogger, ctxKeyTraceID, ctxKeySpanID string
-	level                                     string
+	logger                       glog.Logger
+	colored                      bool
+	ctxKeyLogger, ctxKeyTraceKey string
+	level                        string
 }
 
 func (o *loggerMwOpt) applyOpts(optfs ...LoggerMwOptFunc) *loggerMwOpt {
@@ -43,8 +41,7 @@ func (o *loggerMwOpt) fillDefault() *loggerMwOpt {
 	o.logger = Logger.Named("gin-middlewares")
 	o.level = glog.LevelDebug.String()
 	o.ctxKeyLogger = defaultCtxKeyLogger
-	o.ctxKeySpanID = defaultCtxKeySpanID
-	o.ctxKeyTraceID = defaultCtxKeyTraceID
+	o.ctxKeyTraceKey = gutils.TracingKey
 	return o
 }
 
@@ -65,17 +62,10 @@ func WithLoggerMwColored() LoggerMwOptFunc {
 // 	}
 // }
 
-// WithTraceIDCtxKey embedded traceID into context
-func WithTraceIDCtxKey(key string) LoggerMwOptFunc {
+// WithTracingCtxKey embedded traceID into context
+func WithTracingCtxKey(key string) LoggerMwOptFunc {
 	return func(opt *loggerMwOpt) {
-		opt.ctxKeyTraceID = key
-	}
-}
-
-// WithSpanIDCtxKey embedded spanID into context
-func WithSpanIDCtxKey(key string) LoggerMwOptFunc {
-	return func(opt *loggerMwOpt) {
-		opt.ctxKeySpanID = key
+		opt.ctxKeyTraceKey = key
 	}
 }
 
@@ -103,6 +93,11 @@ func NewLoggerMiddleware(optfs ...LoggerMwOptFunc) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		startAt := gutils.Clock.GetUTCNow()
 
+		var traceID string
+		if tid, err := TraceID(ctx); err != nil {
+			traceID = tid.String()
+		}
+
 		// get logger
 		logger := opt.logger
 		if loggeri, ok := ctx.Get(opt.ctxKeyLogger); ok {
@@ -114,8 +109,7 @@ func NewLoggerMiddleware(optfs ...LoggerMwOptFunc) gin.HandlerFunc {
 			zap.String("url", ctx.Request.URL.String()),
 			zap.String("remote", ctx.Request.RemoteAddr),
 			zap.String("host", ctx.Request.Host),
-			zap.String("trace_id", TraceID(ctx)),
-			zap.String("span_id", SpanID(ctx)),
+			zap.String("trace_id", traceID),
 			zap.String("cost", gutils.CostSecs(time.Since(startAt))),
 		)
 
@@ -130,8 +124,7 @@ func NewLoggerMiddleware(optfs ...LoggerMwOptFunc) gin.HandlerFunc {
 		}
 
 		SetLogger(ctx, logger)
-		ctx.Header(defaultCtxKeyTraceID, TraceID(ctx))
-		ctx.Header(defaultCtxKeySpanID, SpanID(ctx))
+		ctx.Header(gutils.TracingKey, traceID)
 		ctx.Next()
 
 		logger = logger.With(zap.String("response_size",

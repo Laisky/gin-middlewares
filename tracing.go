@@ -6,27 +6,20 @@ import (
 )
 
 // TraceID get trace id from context
-func TraceID(ctx *gin.Context) string {
-	val := ctx.GetString(defaultCtxKeyTraceID)
+func TraceID(ctx *gin.Context) (gutils.JaegerTracingID, error) {
+	val := ctx.GetString(gutils.TracingKey)
 	if val == "" {
-		val = ctx.Request.Header.Get(defaultCtxKeyTraceID)
+		val = ctx.Request.Header.Get(gutils.TracingKey)
 	}
 
 	if val == "" {
-		val = gutils.UUID1()
+		if tid, err := gutils.NewJaegerTracingID(0, 0, 0, 0); err != nil {
+			return tid, err
+		} else {
+			val = tid.String()
+		}
 	}
 
-	ctx.Set(defaultCtxKeyTraceID, val)
-	return val
-}
-
-// SpanID get span id from context
-func SpanID(ctx *gin.Context) string {
-	val := ctx.GetString(defaultCtxKeySpanID)
-	if val == "" {
-		val = gutils.UUID1()
-	}
-
-	ctx.Set(defaultCtxKeySpanID, val)
-	return val
+	ctx.Set(gutils.TracingKey, val)
+	return gutils.JaegerTracingID(val), nil
 }

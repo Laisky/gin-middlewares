@@ -47,8 +47,8 @@ github.com/Laisky/go-utils/v4 v4.5.3-0.20231024073751-1d1cb79424da h1:3rJHMc/01h
 github.com/Laisky/go-utils/v4 v4.5.3-0.20231024073751-1d1cb79424da/go.mod h1:yq813Xb67Pvj1f5GIm6m4srC4uw49qHeHJFMdssDzyc=
 github.com/Laisky/graphql v1.0.6 h1:NEULGxfxo+wbsW2OmqBXOMNUGgqo8uFjWNabwuNK10g=
 github.com/Laisky/graphql v1.0.6/go.mod h1:zaKVqXmMQTnTkFJ2AA53oyBWMzlGCnzr3aodKTrtOxI=
-github.com/Laisky/pprof v0.0.0-20231102055609-c52172a79881 h1:59DfXYOG3xuP5M3rPdUb/ePRdwh65kH1sI9cWa0GZZM=
-github.com/Laisky/pprof v0.0.0-20231102055609-c52172a79881/go.mod h1:lLEJWRnb/5dlinRwiUUdJc4TdbwDOO2UROQb/z7CAg4=
+github.com/Laisky/pprof v0.0.0-20231102060718-a7a7fd2965ee h1:V1d26ZVBvLfzk9yK/bY5ga4BYGxoeyz9skxxvcfMoLQ=
+github.com/Laisky/pprof v0.0.0-20231102060718-a7a7fd2965ee/go.mod h1:cX5FfBd0q3TXPOZog5ZYaLWysWOD06RSNk6Fixc3bDc=
 github.com/Laisky/zap v1.25.2 h1:GFWM4mGpICpiVgsVGsVrZS+0ocko6DrCYASxdAUgkl4=
 github.com/Laisky/zap v1.25.2/go.mod h1:6lEGuHnCEmRLqbyMHhU1AGUah1dV4lrhPIM8c05Uo2w=
 github.com/OneOfOne/xxhash v1.2.2 h1:KMrpdQIwFcEqXDklaen+P1axHaj9BSKzvpUUfnHldSE=

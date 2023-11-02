@@ -8,14 +8,12 @@ require (
 	github.com/Laisky/errors/v2 v2.0.1
 	github.com/Laisky/go-gin-prometheus v1.0.1
 	github.com/Laisky/go-utils/v4 v4.5.3-0.20231024073751-1d1cb79424da
+	github.com/Laisky/pprof v0.0.0-20231102060718-a7a7fd2965ee
 	github.com/Laisky/zap v1.25.2
-	github.com/gin-contrib/pprof v1.4.0
 	github.com/gin-gonic/gin v1.9.1
 	github.com/golang-jwt/jwt/v4 v4.5.0
 	github.com/stretchr/testify v1.8.4
 )
-
-replace github.com/gin-contrib/pprof v1.4.0 => github.com/Laisky/pprof v0.0.0-20231102055609-c52172a79881
 
 require (
 	github.com/GoWebProd/gip v0.0.0-20230623090727-b60d41d5d320 // indirect

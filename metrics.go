@@ -7,8 +7,8 @@ import (
 
 	"github.com/Laisky/errors/v2"
 	ginprometheus "github.com/Laisky/go-gin-prometheus"
+	"github.com/Laisky/pprof"
 	"github.com/Laisky/zap"
-	"github.com/gin-contrib/pprof"
 	"github.com/gin-gonic/gin"
 )
 

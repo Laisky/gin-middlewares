@@ -62,7 +62,7 @@ func WithPprofPath(path string) MetricsOptFunc {
 }
 
 // EnableMetric enable metrics for exsits gin server
-func EnableMetric(srv *gin.Engine, options ...MetricsOptFunc) (err error) {
+func EnableMetric(srv gin.IRouter, options ...MetricsOptFunc) (err error) {
 	opt := newMetricOption()
 	for _, optf := range options {
 		if err = optf(opt); err != nil {
@@ -112,7 +112,7 @@ func NewHTTPMetricSrv(ctx context.Context, options ...MetricsOptFunc) (srv *http
 }
 
 // BindPrometheus bind prometheus endpoint.
-func BindPrometheus(s *gin.Engine) {
+func BindPrometheus(s gin.IRouter) {
 	p := ginprometheus.NewPrometheus("gin")
 	p.Use(s)
 }

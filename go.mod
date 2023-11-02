@@ -1,19 +1,25 @@
 module github.com/Laisky/gin-middlewares/v5
 
-go 1.20
+go 1.21
+
+toolchain go1.21.0
 
 require (
 	github.com/Laisky/errors/v2 v2.0.1
-	github.com/Laisky/go-gin-prometheus v1.0.0
-	github.com/Laisky/go-utils/v4 v4.5.3-0.20231007034844-0e17fe3e4a58
-	github.com/Laisky/zap v1.25.1
+	github.com/Laisky/go-gin-prometheus v1.0.1
+	github.com/Laisky/go-utils/v4 v4.5.3-0.20231024073751-1d1cb79424da
+	github.com/Laisky/zap v1.25.2
 	github.com/gin-contrib/pprof v1.4.0
 	github.com/gin-gonic/gin v1.9.1
 	github.com/golang-jwt/jwt/v4 v4.5.0
 	github.com/stretchr/testify v1.8.4
 )
 
+replace github.com/gin-contrib/pprof v1.4.0 => github.com/Laisky/pprof v0.0.0-20231102055609-c52172a79881
+
 require (
+	github.com/GoWebProd/gip v0.0.0-20230623090727-b60d41d5d320 // indirect
+	github.com/GoWebProd/uuid7 v0.0.0-20230623091058-5f5954faed6a // indirect
 	github.com/Laisky/go-chaining v0.0.0-20180507092046-43dcdc5a21be // indirect
 	github.com/Laisky/graphql v1.0.6 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
@@ -27,13 +33,13 @@ require (
 	github.com/gin-contrib/sse v0.1.0 // indirect
 	github.com/go-playground/locales v0.14.1 // indirect
 	github.com/go-playground/universal-translator v0.18.1 // indirect
-	github.com/go-playground/validator/v10 v10.14.0 // indirect
+	github.com/go-playground/validator/v10 v10.14.1 // indirect
 	github.com/goccy/go-json v0.10.2 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/google/go-cpy v0.0.0-20211218193943-a9c933c06932 // indirect
 	github.com/google/uuid v1.3.1 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
-	github.com/klauspost/cpuid/v2 v2.2.4 // indirect
+	github.com/klauspost/cpuid/v2 v2.2.5 // indirect
 	github.com/leodido/go-urn v1.2.4 // indirect
 	github.com/mattn/go-isatty v0.0.19 // indirect
 	github.com/matttproud/golang_protobuf_extensions v1.0.1 // indirect
@@ -51,11 +57,11 @@ require (
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
 	github.com/ugorji/go/codec v1.2.11 // indirect
 	go.uber.org/automaxprocs v1.5.3 // indirect
-	go.uber.org/multierr v1.10.0 // indirect
+	go.uber.org/multierr v1.11.0 // indirect
 	golang.org/x/arch v0.3.0 // indirect
 	golang.org/x/crypto v0.13.0 // indirect
-	golang.org/x/lint v0.0.0-20200302205851-738671d3881b // indirect
-	golang.org/x/net v0.10.0 // indirect
+	golang.org/x/lint v0.0.0-20210508222113-6edffad5e616 // indirect
+	golang.org/x/net v0.11.0 // indirect
 	golang.org/x/sync v0.3.0 // indirect
 	golang.org/x/sys v0.12.0 // indirect
 	golang.org/x/term v0.12.0 // indirect

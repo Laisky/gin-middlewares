@@ -87,6 +87,12 @@ func WithLogger(logger glog.Logger) LoggerMwOptFunc {
 	}
 }
 
+// Ctx get request context from gin.Context
+func Ctx(c *gin.Context) context.Context {
+	ctx := SetLogger(c.Request.Context(), GetLogger(c))
+	return ctx
+}
+
 // NewLoggerMiddleware middleware to logging
 func NewLoggerMiddleware(optfs ...LoggerMwOptFunc) gin.HandlerFunc {
 	opt := new(loggerMwOpt).fillDefault().applyOpts(optfs...)

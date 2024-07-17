@@ -23,5 +23,9 @@ func FromStd(handler http.HandlerFunc) gin.HandlerFunc {
 
 // GetGinCtxFromStdCtx get gin context from standard request.context by GinCtxKey
 func GetGinCtxFromStdCtx(ctx context.Context) *gin.Context {
+	if gctx, ok := ctx.(*gin.Context); ok {
+		return gctx
+	}
+
 	return ctx.Value(GinCtxKey).(*gin.Context)
 }

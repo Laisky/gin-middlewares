@@ -3,7 +3,7 @@ package middlewares
 import (
 	"testing"
 
-	glog "github.com/Laisky/go-utils/v4/log"
+	glog "github.com/Laisky/go-utils/v5/log"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/require"
 )

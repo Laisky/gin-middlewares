@@ -1,7 +1,7 @@
 package middlewares
 
 import (
-	log "github.com/Laisky/go-utils/v4/log"
+	log "github.com/Laisky/go-utils/v5/log"
 	"github.com/Laisky/zap"
 )
 

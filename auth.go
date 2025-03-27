@@ -58,7 +58,12 @@ func NewAuth(secret []byte, opts ...AuthOptFunc) (a *Auth, err error) {
 
 // GetUserClaims get token from request.ctx then validate and return userid
 func (a *Auth) GetUserClaims(ctx context.Context, claims jwt.Claims) (err error) {
-	token := GetGinCtxFromStdCtx(ctx).GetHeader(authHeaderName)
+	gctx, ok := GetGinCtxFromStdCtx(ctx)
+	if !ok {
+		return errors.New("gin context not found in ctx")
+	}
+
+	token := gctx.GetHeader(authHeaderName)
 	if strings.HasPrefix(token, authHeaderPrefix) { // remove "Bearer "
 		token = token[len(authHeaderPrefix)+1:]
 	}
@@ -136,7 +141,11 @@ func (a *Auth) SetAuthHeader(ctx context.Context, optfs ...SetAuthHeaderOption) 
 		}
 	}
 
-	ginCtx := GetGinCtxFromStdCtx(ctx)
+	ginCtx, ok := GetGinCtxFromStdCtx(ctx)
+	if !ok {
+		return "", errors.New("gin context not found in ctx")
+	}
+
 	ginCtx.Header(authHeaderName, fmt.Sprintf(authHeaderLayout, opt.token))
 	return opt.token, nil
 }

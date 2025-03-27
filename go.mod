@@ -1,17 +1,17 @@
 module github.com/Laisky/gin-middlewares/v6
 
-go 1.23
+go 1.23.0
 
-toolchain go1.23.0
+toolchain go1.24.0
 
 require (
 	github.com/Laisky/errors/v2 v2.0.1
 	github.com/Laisky/go-gin-prometheus v1.0.1
-	github.com/Laisky/go-utils/v5 v5.0.0-20241212011255-c6008c31ffaf
+	github.com/Laisky/go-utils/v5 v5.0.1-0.20250228054950-e1500acd6929
 	github.com/Laisky/pprof v0.0.0-20231102060718-a7a7fd2965ee
 	github.com/Laisky/zap v1.27.1-0.20241010063010-3154c45f2a1f
 	github.com/gin-gonic/gin v1.10.0
-	github.com/golang-jwt/jwt/v4 v4.5.1
+	github.com/golang-jwt/jwt/v4 v4.5.2
 	github.com/stretchr/testify v1.10.0
 )
 

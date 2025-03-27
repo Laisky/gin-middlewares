@@ -12,8 +12,8 @@ type ctxkey string
 
 const (
 	// CtxKeyGin key of gin ctx that saved in request.context
-	CtxKeyGin  ctxkey = "@gin"
-	CtxKeyLock ctxkey = "@lock"
+	CtxKeyGin  ctxkey = "@laisky-gmw:gin"
+	CtxKeyLock ctxkey = "@laisky-gmw:lock"
 )
 
 // FromStd convert std handler to gin.Handler, with gin context embedded

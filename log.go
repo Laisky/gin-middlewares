@@ -89,8 +89,8 @@ func WithLogger(logger glog.Logger) LoggerMwOptFunc {
 
 // Ctx get request context from gin.Context
 func Ctx(c *gin.Context) context.Context {
-
 	ctx := SetLogger(c.Request.Context(), GetLogger(c))
+	ctx = context.WithValue(ctx, CtxKeyGin, c)
 
 	if tid, err := TraceID(c); err != nil {
 		GetLogger(ctx).Error("failed to get traceID", zap.Error(err))
@@ -104,6 +104,7 @@ func Ctx(c *gin.Context) context.Context {
 // BackgroundCtx get background context from gin.Context
 func BackgroundCtx(c *gin.Context) context.Context {
 	ctx := SetLogger(c, GetLogger(c))
+	ctx = context.WithValue(ctx, CtxKeyGin, c)
 
 	if tid, err := TraceID(c); err != nil {
 		GetLogger(ctx).Error("failed to get traceID", zap.Error(err))

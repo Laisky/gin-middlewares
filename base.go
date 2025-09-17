@@ -19,6 +19,9 @@ const (
 // FromStd convert std handler to gin.Handler, with gin context embedded
 func FromStd(handler http.HandlerFunc) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
+		if ctx == nil || ctx.Request == nil {
+			panic("gin context or request is nil in FromStd")
+		}
 		r2 := ctx.Request.WithContext(context.WithValue(ctx.Request.Context(), CtxKeyGin, ctx))
 		handler(ctx.Writer, r2)
 	}
@@ -26,10 +29,20 @@ func FromStd(handler http.HandlerFunc) gin.HandlerFunc {
 
 // GetGinCtxFromStdCtx get gin context from standard request.context by GinCtxKey
 func GetGinCtxFromStdCtx(ctx context.Context) (*gin.Context, bool) {
-	if gctx, ok := ctx.(*gin.Context); ok {
+	if ctx == nil {
+		Logger.Warn("context is nil, cannot get gin context")
+		return nil, false
+	}
+
+	if gctx, ok := ctx.(*gin.Context); ok && gctx != nil {
 		return gctx, true
 	}
 
-	gctx, ok := ctx.Value(CtxKeyGin).(*gin.Context)
-	return gctx, ok
+	if v := ctx.Value(CtxKeyGin); v != nil {
+		if gctx, ok := v.(*gin.Context); ok && gctx != nil {
+			return gctx, true
+		}
+	}
+
+	return nil, false
 }

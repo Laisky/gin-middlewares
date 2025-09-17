@@ -8,9 +8,16 @@ import (
 
 // TraceID get trace id from context
 func TraceID(ctx *gin.Context) (gutils.JaegerTracingID, error) {
-	val := ctx.GetString(gutils.TracingKey)
-	if val == "" {
-		val = ctx.Request.Header.Get(gutils.TracingKey)
+	var val string
+	if ctx != nil {
+		// prefer value set in gin context
+		val = ctx.GetString(gutils.TracingKey)
+		// then try request header when request is available
+		if val == "" && ctx.Request != nil {
+			val = ctx.Request.Header.Get(gutils.TracingKey)
+		}
+	} else {
+		Logger.Warn("TraceID called with nil gin.Context; creating new trace id")
 	}
 
 	if val == "" {
@@ -21,6 +28,10 @@ func TraceID(ctx *gin.Context) (gutils.JaegerTracingID, error) {
 		}
 	}
 
-	ctx.Set(gutils.TracingKey, val)
+	if ctx != nil {
+		ctx.Set(gutils.TracingKey, val)
+	} else {
+		Logger.Warn("TraceID generated but cannot embed into nil gin.Context")
+	}
 	return gutils.JaegerTracingID(val), nil
 }

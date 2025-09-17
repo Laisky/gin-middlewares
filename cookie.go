@@ -24,10 +24,11 @@ func (o *setCookieOption) fillDefault(ctx *gin.Context) *setCookieOption {
 	o.cookiePath = defaultCookiePath
 	o.cookieSecure = defaultCookieSecure
 	o.cookieHttpOnly = defaultCookieHTTPOnly
-	o.cookieHost = ctx.Request.Host
-
-	if ctx.Request.URL.Port() != "" {
-		o.cookieHost += ":" + ctx.Request.URL.Port()
+	if ctx != nil && ctx.Request != nil {
+		o.cookieHost = ctx.Request.Host
+		if ctx.Request.URL != nil && ctx.Request.URL.Port() != "" {
+			o.cookieHost += ":" + ctx.Request.URL.Port()
+		}
 	}
 
 	return o
@@ -101,6 +102,15 @@ func SetCookie(ctx *gin.Context,
 	opt, err := new(setCookieOption).fillDefault(ctx).applyOpts()
 	if err != nil {
 		return err
+	}
+
+	if ctx == nil {
+		Logger.Warn("SetCookie got nil gin.Context")
+		return errors.New("gin context is nil")
+	}
+	if ctx.Writer == nil {
+		Logger.Warn("SetCookie got nil gin writer")
+		return errors.New("gin writer is nil")
 	}
 
 	ctx.SetCookie(name,

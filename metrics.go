@@ -70,6 +70,11 @@ func EnableMetric(srv gin.IRouter, options ...MetricsOptFunc) (err error) {
 		}
 	}
 
+	if srv == nil {
+		Logger.Warn("EnableMetric got nil gin router")
+		return errors.New("gin router is nil")
+	}
+
 	pprof.Register(srv, opt.pprofPath)
 	BindPrometheus(srv)
 	return nil
@@ -77,6 +82,10 @@ func EnableMetric(srv gin.IRouter, options ...MetricsOptFunc) (err error) {
 
 // NewHTTPMetricSrv start new gin server with metrics api
 func NewHTTPMetricSrv(ctx context.Context, options ...MetricsOptFunc) (srv *http.Server, err error) {
+	if ctx == nil {
+		Logger.Warn("NewHTTPMetricSrv got nil context, using background context")
+		ctx = context.Background()
+	}
 	opt := newMetricOption()
 	for _, optf := range options {
 		if err = optf(opt); err != nil {
@@ -113,6 +122,10 @@ func NewHTTPMetricSrv(ctx context.Context, options ...MetricsOptFunc) (srv *http
 
 // BindPrometheus bind prometheus endpoint.
 func BindPrometheus(s gin.IRouter) {
+	if s == nil {
+		Logger.Warn("BindPrometheus got nil router, skip binding")
+		return
+	}
 	p := ginprometheus.NewPrometheus("gin")
 	p.Use(s)
 }

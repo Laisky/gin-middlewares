@@ -89,8 +89,18 @@ func WithLogger(logger glog.Logger) LoggerMwOptFunc {
 
 // Ctx get request context from gin.Context
 func Ctx(c *gin.Context) context.Context {
-	ctx := SetLogger(c.Request.Context(), GetLogger(c))
-	ctx = context.WithValue(ctx, CtxKeyGin, c)
+	// base context prefers request context when available
+	var base context.Context
+	if c != nil && c.Request != nil && c.Request.Context() != nil {
+		base = c.Request.Context()
+	} else {
+		Logger.Warn("gin request or request context is nil, using background context in Ctx()")
+		base = context.Background()
+	}
+	ctx := SetLogger(base, GetLogger(c))
+	if c != nil {
+		ctx = context.WithValue(ctx, CtxKeyGin, c)
+	}
 
 	if tid, err := TraceID(c); err != nil {
 		GetLogger(ctx).Error("failed to get traceID", zap.Error(err))
@@ -103,6 +113,10 @@ func Ctx(c *gin.Context) context.Context {
 
 // BackgroundCtx get background context from gin.Context
 func BackgroundCtx(c *gin.Context) context.Context {
+	if c == nil {
+		panic("gin context is nil in BackgroundCtx")
+	}
+
 	ctx := SetLogger(c, GetLogger(c))
 	ctx = context.WithValue(ctx, CtxKeyGin, c)
 
@@ -130,40 +144,70 @@ func NewLoggerMiddleware(optfs ...LoggerMwOptFunc) gin.HandlerFunc {
 
 		// get logger
 		logger := opt.logger
-		if loggeri, ok := ctx.Get(opt.ctxKeyLogger); ok {
-			if l, ok := loggeri.(glog.Logger); ok && l != nil {
-				logger = l
+		if ctx == nil {
+			// This should never happen in normal gin flow, but warn just in case.
+			Logger.Warn("NewLoggerMiddleware received nil gin.Context; skip ctx-bound operations")
+		}
+		if ctx != nil {
+			if loggeri, ok := ctx.Get(opt.ctxKeyLogger); ok {
+				if l, ok := loggeri.(glog.Logger); ok && l != nil {
+					logger = l
+				}
 			}
 		}
+		var urlStr, remote, host string
+		if ctx != nil && ctx.Request != nil {
+			if ctx.Request.URL != nil {
+				urlStr = ctx.Request.URL.String()
+			}
+			remote = ctx.Request.RemoteAddr
+			host = ctx.Request.Host
+		} else if ctx != nil && ctx.Request == nil {
+			Logger.Warn("gin request is nil in NewLoggerMiddleware; url/remote/host unavailable")
+		}
 		logger = logger.With(
-			zap.String("url", ctx.Request.URL.String()),
-			zap.String("remote", ctx.Request.RemoteAddr),
-			zap.String("host", ctx.Request.Host),
+			zap.String("url", urlStr),
+			zap.String("remote", remote),
+			zap.String("host", host),
 			zap.String("trace_id", traceID),
 			zap.String("cost", gutils.CostSecs(time.Since(startAt))),
 		)
 
 		// only log request size when method is not GET/HEAD/OPTIONS
-		if !gutils.Contains([]string{
+		if ctx != nil && ctx.Request != nil && !gutils.Contains([]string{
 			http.MethodHead, http.MethodGet, http.MethodOptions,
 		}, ctx.Request.Method) {
 			logger = logger.With(
 				zap.String("request_size",
 					gutils.HumanReadableByteCount(ctx.Request.ContentLength, true)),
 			)
+		} else if ctx != nil && ctx.Request == nil {
+			Logger.Warn("gin request is nil; cannot log request size")
 		}
 
-		SetLogger(ctx, logger)
-		ctx.Header(gutils.TracingKey, traceID)
-		ctx.Next()
+		if ctx != nil {
+			SetLogger(ctx, logger)
+			ctx.Header(gutils.TracingKey, traceID)
+			ctx.Next()
+		} else {
+			Logger.Warn("gin context is nil; cannot set logger into context or proceed Next()")
+		}
 
-		logger = logger.With(zap.String("response_size",
-			gutils.HumanReadableByteCount(int64(ctx.Writer.Size()), true)))
+		if ctx != nil && ctx.Writer != nil {
+			logger = logger.With(zap.String("response_size",
+				gutils.HumanReadableByteCount(int64(ctx.Writer.Size()), true)))
+		} else if ctx != nil && ctx.Writer == nil {
+			Logger.Warn("gin writer is nil; cannot log response size")
+		}
 		var status string
 		if opt.colored {
 			status = coloredStatus(ctx)
 		} else {
-			status = strconv.Itoa(ctx.Writer.Status()) + " " + ctx.Request.Method
+			if ctx != nil && ctx.Writer != nil && ctx.Request != nil {
+				status = strconv.Itoa(ctx.Writer.Status()) + " " + ctx.Request.Method
+			} else {
+				Logger.Warn("missing writer or request; cannot compose status line")
+			}
 		}
 
 		switch opt.level {
@@ -177,6 +221,9 @@ func NewLoggerMiddleware(optfs ...LoggerMwOptFunc) gin.HandlerFunc {
 
 // coloredStatus zap field 会做二次转译，导致 ANSI color 失效
 func coloredStatus(ctx *gin.Context) string {
+	if ctx == nil || ctx.Writer == nil || ctx.Request == nil {
+		return ""
+	}
 	codeStr := strconv.Itoa(ctx.Writer.Status()) + " " + ctx.Request.Method
 	switch ctx.Writer.Status() / 100 {
 	case 2:
@@ -194,17 +241,26 @@ func coloredStatus(ctx *gin.Context) string {
 
 // GetLogger get logger from context
 func GetLogger(ctx context.Context) (logger glog.Logger) {
-	if gctx, ok := ctx.(*gin.Context); ok && gctx != nil {
-		if loggeri, ok := gctx.Get(defaultCtxKeyLogger); ok && loggeri != nil {
+	if ctx == nil {
+		return glog.Shared.Named("gin")
+	}
+	switch c := ctx.(type) {
+	case *gin.Context:
+		if c != nil {
+			if loggeri, ok := c.Get(defaultCtxKeyLogger); ok && loggeri != nil {
+				if logger, ok := loggeri.(glog.Logger); ok && logger != nil {
+					return logger
+				}
+			}
+		}
+		// c is a *gin.Context (possibly nil). Do not call ctx.Value because it would
+		// dispatch to (*gin.Context).Value on a nil receiver and panic. Fall through
+		// to return the default logger below.
+	default:
+		if loggeri := ctx.Value(defaultCtxKeyLogger); loggeri != nil {
 			if logger, ok := loggeri.(glog.Logger); ok && logger != nil {
 				return logger
 			}
-		}
-	}
-
-	if loggeri := ctx.Value(defaultCtxKeyLogger); loggeri != nil {
-		if logger, ok := loggeri.(glog.Logger); ok && logger != nil {
-			return logger
 		}
 	}
 
@@ -213,9 +269,12 @@ func GetLogger(ctx context.Context) (logger glog.Logger) {
 
 // SetLogger set logger into context
 func SetLogger(ctx context.Context, logger glog.Logger) context.Context {
+	if ctx == nil {
+		ctx = context.Background()
+	}
 	if gctx, ok := ctx.(*gin.Context); ok && gctx != nil {
 		gctx.Set(defaultCtxKeyLogger, logger)
-		if gctx.Request != nil {
+		if gctx.Request != nil && gctx.Request.Context() != nil {
 			ctx = gctx.Request.Context()
 		}
 	}

@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"testing"
 
-	gutils "github.com/Laisky/go-utils/v5"
+	gutils "github.com/Laisky/go-utils/v6"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/require"
 )

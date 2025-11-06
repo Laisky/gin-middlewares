@@ -6,8 +6,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	gutils "github.com/Laisky/go-utils/v5"
-	glog "github.com/Laisky/go-utils/v5/log"
+	gutils "github.com/Laisky/go-utils/v6"
+	glog "github.com/Laisky/go-utils/v6/log"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/stretchr/testify/require"

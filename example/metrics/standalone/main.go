@@ -6,7 +6,7 @@ import (
 	"log"
 	"time"
 
-	ginMw "github.com/Laisky/gin-middlewares/v6"
+	ginMw "github.com/Laisky/gin-middlewares/v7"
 )
 
 func main() {

@@ -2,7 +2,7 @@ package middlewares
 
 import (
 	"github.com/Laisky/errors/v2"
-	gutils "github.com/Laisky/go-utils/v5"
+	gutils "github.com/Laisky/go-utils/v6"
 	"github.com/gin-gonic/gin"
 )
 

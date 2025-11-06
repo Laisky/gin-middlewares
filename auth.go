@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/Laisky/errors/v2"
-	gjwt "github.com/Laisky/go-utils/v5/jwt"
+	gjwt "github.com/Laisky/go-utils/v6/jwt"
 	"github.com/golang-jwt/jwt/v4"
 )
 

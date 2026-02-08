@@ -70,7 +70,7 @@ func (a *Auth) GetUserClaims(ctx context.Context, claims jwt.Claims) (err error)
 
 	token := gctx.GetHeader(authHeaderName)
 	if strings.HasPrefix(token, authHeaderPrefix) { // remove "Bearer "
-		token = token[len(authHeaderPrefix)+1:]
+		token = strings.TrimSpace(strings.TrimPrefix(token, authHeaderPrefix))
 	}
 
 	if err = a.jwt.ParseClaims(token, claims); err != nil {

@@ -133,3 +133,21 @@ func TestCtxTraceInject_NoPanic(t *testing.T) {
 		_ = tid
 	}
 }
+
+func TestGetUserClaims_NoPanicOnMalformedHeader(t *testing.T) {
+	a, err := NewAuth([]byte("secret"))
+	require.NoError(t, err)
+
+	gin.SetMode(gin.TestMode)
+	w := httptest.NewRecorder()
+	ctx, _ := gin.CreateTestContext(w)
+	ctx.Request, _ = http.NewRequest("GET", "/", nil)
+	ctx.Request.Header.Set("Authorization", "Bearer") // Exactly "Bearer"
+
+	stdCtx := context.WithValue(context.Background(), CtxKeyGin, ctx)
+
+	require.NotPanics(t, func() {
+		err = a.GetUserClaims(stdCtx, &dummyClaims{})
+		require.Error(t, err)
+	})
+}

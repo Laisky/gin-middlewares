@@ -2,6 +2,7 @@ package middlewares
 
 import (
 	"fmt"
+	"net"
 
 	"github.com/Laisky/errors/v2"
 	"github.com/Laisky/zap"
@@ -11,7 +12,7 @@ import (
 const (
 	defaultCookiePath     = "/"
 	defaultCookieSecure   = false
-	defaultCookieHTTPOnly = false
+	defaultCookieHTTPOnly = true
 )
 
 type setCookieOption struct {
@@ -25,9 +26,12 @@ func (o *setCookieOption) fillDefault(ctx *gin.Context) *setCookieOption {
 	o.cookieSecure = defaultCookieSecure
 	o.cookieHttpOnly = defaultCookieHTTPOnly
 	if ctx != nil && ctx.Request != nil {
-		o.cookieHost = ctx.Request.Host
-		if ctx.Request.URL != nil && ctx.Request.URL.Port() != "" {
-			o.cookieHost += ":" + ctx.Request.URL.Port()
+		// Cookie domain should not include port.
+		// If Host header contains port, remove it.
+		if host, _, err := net.SplitHostPort(ctx.Request.Host); err == nil {
+			o.cookieHost = host
+		} else {
+			o.cookieHost = ctx.Request.Host
 		}
 	}
 
@@ -99,7 +103,7 @@ func WithCookieHost(host string) SetCookieOption {
 func SetCookie(ctx *gin.Context,
 	name, value string,
 	opts ...SetCookieOption) (err error) {
-	opt, err := new(setCookieOption).fillDefault(ctx).applyOpts()
+	opt, err := new(setCookieOption).fillDefault(ctx).applyOpts(opts...)
 	if err != nil {
 		return err
 	}

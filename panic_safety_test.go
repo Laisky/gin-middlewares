@@ -114,6 +114,21 @@ func TestAuth_NoPanicOnMissingParts(t *testing.T) {
 	require.NoError(t, err)
 }
 
+func TestGetUserClaims_NoPanicOnMalformedHeader(t *testing.T) {
+	a, err := NewAuth([]byte("secret"))
+	require.NoError(t, err)
+
+	w := httptest.NewRecorder()
+	ctx, _ := gin.CreateTestContext(w)
+	ctx.Request = httptest.NewRequest(http.MethodGet, "/", nil)
+	ctx.Request.Header.Set(authHeaderName, authHeaderPrefix)
+
+	require.NotPanics(t, func() {
+		err = a.GetUserClaims(ctx, &dummyClaims{})
+	})
+	require.Error(t, err)
+}
+
 func TestMetrics_NoPanicOnNilRouter(t *testing.T) {
 	err := EnableMetric(nil)
 	require.Error(t, err)

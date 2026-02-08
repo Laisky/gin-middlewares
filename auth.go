@@ -5,9 +5,11 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"unicode"
 
 	"github.com/Laisky/errors/v2"
 	gjwt "github.com/Laisky/go-utils/v6/jwt"
+	"github.com/Laisky/zap"
 	"github.com/golang-jwt/jwt/v4"
 )
 
@@ -68,16 +70,47 @@ func (a *Auth) GetUserClaims(ctx context.Context, claims jwt.Claims) (err error)
 		return errors.New("gin request is nil")
 	}
 
-	token := gctx.GetHeader(authHeaderName)
-	if strings.HasPrefix(token, authHeaderPrefix) { // remove "Bearer "
-		token = token[len(authHeaderPrefix)+1:]
+	rawAuthHeader := gctx.GetHeader(authHeaderName)
+	token := extractTokenFromAuthHeader(rawAuthHeader)
+	if token == "" {
+		Logger.Debug("authorization token is empty",
+			zap.Int("auth_header_len", len(rawAuthHeader)),
+			zap.Bool("has_bearer_prefix", strings.HasPrefix(strings.TrimSpace(rawAuthHeader), authHeaderPrefix)),
+		)
 	}
 
 	if err = a.jwt.ParseClaims(token, claims); err != nil {
+		Logger.Debug("failed to parse claims from authorization header",
+			zap.Int("auth_header_len", len(rawAuthHeader)),
+			zap.Int("token_len", len(token)),
+			zap.Bool("has_bearer_prefix", strings.HasPrefix(strings.TrimSpace(rawAuthHeader), authHeaderPrefix)),
+			zap.Error(err),
+		)
 		return errors.Wrap(err, "token invalidate")
 	}
 
 	return nil
+}
+
+func extractTokenFromAuthHeader(header string) string {
+	token := strings.TrimSpace(header)
+	if !strings.HasPrefix(token, authHeaderPrefix) {
+		return token
+	}
+
+	rest := strings.TrimPrefix(token, authHeaderPrefix)
+	if rest == "" {
+		return ""
+	}
+
+	// Keep backward compatibility for standard "Bearer <token>" format while
+	// avoiding unsafe slicing for malformed headers.
+	if unicode.IsSpace(rune(rest[0])) {
+		return strings.TrimSpace(rest)
+	}
+
+	// If there is no separator after "Bearer", treat it as a raw token.
+	return token
 }
 
 type setAuthHeaderOption struct {

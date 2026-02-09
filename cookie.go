@@ -2,6 +2,10 @@ package middlewares
 
 import (
 	"fmt"
+	"net"
+	"net/url"
+	"strconv"
+	"strings"
 
 	"github.com/Laisky/errors/v2"
 	"github.com/Laisky/zap"
@@ -26,9 +30,6 @@ func (o *setCookieOption) fillDefault(ctx *gin.Context) *setCookieOption {
 	o.cookieHttpOnly = defaultCookieHTTPOnly
 	if ctx != nil && ctx.Request != nil {
 		o.cookieHost = ctx.Request.Host
-		if ctx.Request.URL != nil && ctx.Request.URL.Port() != "" {
-			o.cookieHost += ":" + ctx.Request.URL.Port()
-		}
 	}
 
 	return o
@@ -37,11 +38,54 @@ func (o *setCookieOption) fillDefault(ctx *gin.Context) *setCookieOption {
 func (o *setCookieOption) applyOpts(opts ...SetCookieOption) (*setCookieOption, error) {
 	for _, f := range opts {
 		if err := f(o); err != nil {
-			return nil, errors.Wrap(err, "apply auth options")
+			return nil, errors.Wrap(err, "apply cookie options")
 		}
 	}
 
 	return o, nil
+}
+
+// normalizeCookieHost normalizes cookie domain input by stripping ports and invalid host parts.
+// The host parameter accepts request host values or user-provided cookie host overrides.
+// The returned host is safe for the Set-Cookie Domain attribute, or empty if no valid domain can be derived.
+func normalizeCookieHost(host string) string {
+	host = strings.TrimSpace(host)
+	if host == "" {
+		return ""
+	}
+
+	if strings.Contains(host, "://") {
+		if parsedURL, err := url.Parse(host); err == nil {
+			host = parsedURL.Host
+		}
+	}
+
+	if parsedHost, _, err := net.SplitHostPort(host); err == nil {
+		host = parsedHost
+	} else if strings.Count(host, ":") == 1 {
+		if hostPart, portPart, ok := strings.Cut(host, ":"); ok {
+			if _, err := strconv.Atoi(portPart); err == nil {
+				host = hostPart
+			}
+		}
+	}
+
+	host = strings.TrimSpace(strings.Trim(host, "[]"))
+	host = strings.TrimSuffix(host, ".")
+	if host == "" {
+		return ""
+	}
+
+	// RFC 6265 domain attribute is host-name based; IPv6 literals are not valid domains.
+	if ip := net.ParseIP(host); ip != nil && ip.To4() == nil {
+		return ""
+	}
+
+	if strings.Contains(host, ":") {
+		return ""
+	}
+
+	return host
 }
 
 // SetCookieOption auth cookie options
@@ -99,19 +143,42 @@ func WithCookieHost(host string) SetCookieOption {
 func SetCookie(ctx *gin.Context,
 	name, value string,
 	opts ...SetCookieOption) (err error) {
-	opt, err := new(setCookieOption).fillDefault(ctx).applyOpts()
+	logger := GetLogger(ctx)
+	opt, err := new(setCookieOption).fillDefault(ctx).applyOpts(opts...)
 	if err != nil {
-		return err
+		logger.Debug("failed to apply cookie options",
+			zap.String("cookie_name", name),
+			zap.Error(err),
+		)
+		return errors.Wrap(err, "apply cookie options")
 	}
 
 	if ctx == nil {
-		Logger.Warn("SetCookie got nil gin.Context")
+		logger.Warn("SetCookie got nil gin.Context")
 		return errors.New("gin context is nil")
 	}
 	if ctx.Writer == nil {
-		Logger.Warn("SetCookie got nil gin writer")
+		logger.Warn("SetCookie got nil gin writer")
 		return errors.New("gin writer is nil")
 	}
+
+	rawCookieHost := opt.cookieHost
+	opt.cookieHost = normalizeCookieHost(opt.cookieHost)
+	if rawCookieHost != opt.cookieHost {
+		logger.Debug("normalized cookie host",
+			zap.String("raw_cookie_host", rawCookieHost),
+			zap.String("normalized_cookie_host", opt.cookieHost),
+		)
+	}
+
+	logger.Debug("set cookie",
+		zap.String("cookie_name", name),
+		zap.Int("cookie_max_age", opt.cookieMaxAge),
+		zap.String("cookie_path", opt.cookiePath),
+		zap.String("cookie_domain", opt.cookieHost),
+		zap.Bool("cookie_secure", opt.cookieSecure),
+		zap.Bool("cookie_http_only", opt.cookieHttpOnly),
+	)
 
 	ctx.SetCookie(name,
 		value,

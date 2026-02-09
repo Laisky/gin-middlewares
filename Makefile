@@ -8,5 +8,5 @@ lint:
 	go mod tidy
 	go vet
 	gofmt -s -w .
-	govulncheck ./...
 	golangci-lint run -c .golangci.lint.yml
+	govulncheck ./...

@@ -1,7 +1,6 @@
 package middlewares
 
 import (
-	"fmt"
 	"net"
 	"net/url"
 	"strconv"
@@ -95,7 +94,7 @@ type SetCookieOption func(*setCookieOption) error
 func WithCookieMaxAge(maxAge int) SetCookieOption {
 	return func(opt *setCookieOption) error {
 		if maxAge < 0 {
-			return fmt.Errorf("maxAge should not less than 0, got %v", maxAge)
+			return errors.Errorf("maxAge should not less than 0, got %v", maxAge)
 		}
 
 		opt.cookieMaxAge = maxAge

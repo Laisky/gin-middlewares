@@ -13,7 +13,7 @@ import (
 )
 
 const (
-	defaultCtxKeyLogger = "gmw-logger"
+	defaultCtxKeyLogger gutils.CtxKey = "gmw-logger"
 )
 
 // LoggerInterface logger interface
@@ -25,7 +25,7 @@ const (
 type loggerMwOpt struct {
 	logger                       glog.Logger
 	colored                      bool
-	ctxKeyLogger, ctxKeyTraceKey string
+	ctxKeyLogger, ctxKeyTraceKey gutils.CtxKey
 	level                        string
 }
 
@@ -65,7 +65,7 @@ func WithLoggerMwColored() LoggerMwOptFunc {
 // WithTracingCtxKey embedded traceID into context
 func WithTracingCtxKey(key string) LoggerMwOptFunc {
 	return func(opt *loggerMwOpt) {
-		opt.ctxKeyTraceKey = key
+		opt.ctxKeyTraceKey = gutils.CtxKey(key)
 	}
 }
 
@@ -134,88 +134,164 @@ func NewLoggerMiddleware(optfs ...LoggerMwOptFunc) gin.HandlerFunc {
 	opt := new(loggerMwOpt).fillDefault().applyOpts(optfs...)
 	return func(ctx *gin.Context) {
 		startAt := gutils.Clock.GetUTCNow()
+		traceID := extractTraceIDForLogger(ctx, opt.logger)
+		logger := resolveRequestLogger(ctx, opt)
+		logger = withRequestFields(logger, ctx, traceID, startAt)
+		logger = withRequestSizeField(logger, ctx)
+		advanceRequest(ctx, logger, traceID)
+		logger = withResponseSizeField(logger, ctx)
+		logByLevel(logger, buildStatus(ctx, opt.colored), opt.level)
+	}
+}
 
-		var traceID string
-		if tid, err := TraceID(ctx); err != nil {
-			opt.logger.Error("failed to get traceID", zap.Error(err))
-		} else {
-			traceID = tid.String()
-		}
+// extractTraceIDForLogger gets trace id from gin context for middleware logging.
+// The ctx parameter is the current gin request context.
+// The fallbackLogger parameter records trace extraction errors.
+// It returns the trace id string if available; otherwise returns an empty string.
+func extractTraceIDForLogger(ctx *gin.Context, fallbackLogger glog.Logger) string {
+	if tid, err := TraceID(ctx); err != nil {
+		fallbackLogger.Error("failed to get traceID", zap.Error(err))
+		return ""
+	} else {
+		return tid.String()
+	}
+}
 
-		// get logger
-		logger := opt.logger
-		if ctx == nil {
-			// This should never happen in normal gin flow, but warn just in case.
-			Logger.Warn("NewLoggerMiddleware received nil gin.Context; skip ctx-bound operations")
+// resolveRequestLogger resolves logger from gin context and falls back to middleware default logger.
+// The ctx parameter is the current gin request context.
+// The opt parameter contains middleware logger options and context keys.
+// It returns a non-nil logger for this request.
+func resolveRequestLogger(ctx *gin.Context, opt *loggerMwOpt) glog.Logger {
+	logger := opt.logger
+	if ctx == nil {
+		// This should never happen in normal gin flow, but warn just in case.
+		Logger.Warn("NewLoggerMiddleware received nil gin.Context; skip ctx-bound operations")
+		return logger
+	}
+
+	if loggeri, ok := ctx.Get(opt.ctxKeyLogger); ok {
+		if l, ok := loggeri.(glog.Logger); ok && l != nil {
+			return l
 		}
-		if ctx != nil {
-			if loggeri, ok := ctx.Get(opt.ctxKeyLogger); ok {
-				if l, ok := loggeri.(glog.Logger); ok && l != nil {
-					logger = l
-				}
-			}
+	}
+
+	return logger
+}
+
+// withRequestFields appends request-related metadata to logger fields.
+// The logger parameter is the current request logger.
+// The ctx parameter is the current gin request context.
+// The traceID parameter is the extracted trace id string.
+// The startAt parameter is the request start timestamp used to compute latency.
+// It returns a logger decorated with request metadata fields.
+func withRequestFields(logger glog.Logger, ctx *gin.Context, traceID string, startAt time.Time) glog.Logger {
+	urlStr, remote, host := requestBasicFields(ctx)
+	return logger.With(
+		zap.String("url", urlStr),
+		zap.String("remote", remote),
+		zap.String("host", host),
+		zap.String("trace_id", traceID),
+		zap.String("cost", gutils.CostSecs(time.Since(startAt))),
+	)
+}
+
+// requestBasicFields extracts url/remote/host from request context when possible.
+// The ctx parameter is the current gin request context.
+// It returns url string, remote address, and host string in that order.
+func requestBasicFields(ctx *gin.Context) (string, string, string) {
+	var urlStr, remote, host string
+	if ctx != nil && ctx.Request != nil {
+		if ctx.Request.URL != nil {
+			urlStr = ctx.Request.URL.String()
 		}
-		var urlStr, remote, host string
-		if ctx != nil && ctx.Request != nil {
-			if ctx.Request.URL != nil {
-				urlStr = ctx.Request.URL.String()
-			}
-			remote = ctx.Request.RemoteAddr
-			host = ctx.Request.Host
-		} else if ctx != nil && ctx.Request == nil {
-			Logger.Warn("gin request is nil in NewLoggerMiddleware; url/remote/host unavailable")
-		}
-		logger = logger.With(
-			zap.String("url", urlStr),
-			zap.String("remote", remote),
-			zap.String("host", host),
-			zap.String("trace_id", traceID),
-			zap.String("cost", gutils.CostSecs(time.Since(startAt))),
+		remote = ctx.Request.RemoteAddr
+		host = ctx.Request.Host
+	} else if ctx != nil && ctx.Request == nil {
+		Logger.Warn("gin request is nil in NewLoggerMiddleware; url/remote/host unavailable")
+	}
+
+	return urlStr, remote, host
+}
+
+// withRequestSizeField appends request payload size when request method carries body.
+// The logger parameter is the current request logger.
+// The ctx parameter is the current gin request context.
+// It returns logger with request_size field when applicable.
+func withRequestSizeField(logger glog.Logger, ctx *gin.Context) glog.Logger {
+	// only log request size when method is not GET/HEAD/OPTIONS
+	if ctx != nil && ctx.Request != nil && !gutils.Contains([]string{
+		http.MethodHead, http.MethodGet, http.MethodOptions,
+	}, ctx.Request.Method) {
+		return logger.With(
+			zap.String("request_size",
+				gutils.HumanReadableByteCount(ctx.Request.ContentLength, true)),
 		)
+	} else if ctx != nil && ctx.Request == nil {
+		Logger.Warn("gin request is nil; cannot log request size")
+	}
 
-		// only log request size when method is not GET/HEAD/OPTIONS
-		if ctx != nil && ctx.Request != nil && !gutils.Contains([]string{
-			http.MethodHead, http.MethodGet, http.MethodOptions,
-		}, ctx.Request.Method) {
-			logger = logger.With(
-				zap.String("request_size",
-					gutils.HumanReadableByteCount(ctx.Request.ContentLength, true)),
-			)
-		} else if ctx != nil && ctx.Request == nil {
-			Logger.Warn("gin request is nil; cannot log request size")
-		}
+	return logger
+}
 
-		if ctx != nil {
-			SetLogger(ctx, logger)
-			ctx.Header(gutils.TracingKey, traceID)
-			ctx.Next()
-		} else {
-			Logger.Warn("gin context is nil; cannot set logger into context or proceed Next()")
-		}
+// advanceRequest writes logger and trace id back to gin context and continues middleware chain.
+// The ctx parameter is the current gin request context.
+// The logger parameter is the request logger that should be stored.
+// The traceID parameter is the trace id string written to response headers.
+// It does not return a value.
+func advanceRequest(ctx *gin.Context, logger glog.Logger, traceID string) {
+	if ctx != nil {
+		SetLogger(ctx, logger)
+		ctx.Header(gutils.TracingKey.String(), traceID)
+		ctx.Next()
+		return
+	}
 
-		if ctx != nil && ctx.Writer != nil {
-			logger = logger.With(zap.String("response_size",
-				gutils.HumanReadableByteCount(int64(ctx.Writer.Size()), true)))
-		} else if ctx != nil && ctx.Writer == nil {
-			Logger.Warn("gin writer is nil; cannot log response size")
-		}
-		var status string
-		if opt.colored {
-			status = coloredStatus(ctx)
-		} else {
-			if ctx != nil && ctx.Writer != nil && ctx.Request != nil {
-				status = strconv.Itoa(ctx.Writer.Status()) + " " + ctx.Request.Method
-			} else {
-				Logger.Warn("missing writer or request; cannot compose status line")
-			}
-		}
+	Logger.Warn("gin context is nil; cannot set logger into context or proceed Next()")
+}
 
-		switch opt.level {
-		case string(glog.LevelInfo):
-			logger.Info(status)
-		default:
-			logger.Debug(status)
-		}
+// withResponseSizeField appends response payload size to logger fields when writer exists.
+// The logger parameter is the current request logger.
+// The ctx parameter is the current gin request context.
+// It returns logger with response_size field when possible.
+func withResponseSizeField(logger glog.Logger, ctx *gin.Context) glog.Logger {
+	if ctx != nil && ctx.Writer != nil {
+		return logger.With(zap.String("response_size",
+			gutils.HumanReadableByteCount(int64(ctx.Writer.Size()), true)))
+	} else if ctx != nil && ctx.Writer == nil {
+		Logger.Warn("gin writer is nil; cannot log response size")
+	}
+
+	return logger
+}
+
+// buildStatus builds final status text for request logs.
+// The ctx parameter is the current gin request context.
+// The colored parameter controls whether status should include ANSI color.
+// It returns a status string suitable for final Info/Debug logging.
+func buildStatus(ctx *gin.Context, colored bool) string {
+	if colored {
+		return coloredStatus(ctx)
+	}
+
+	if ctx != nil && ctx.Writer != nil && ctx.Request != nil {
+		return strconv.Itoa(ctx.Writer.Status()) + " " + ctx.Request.Method
+	}
+
+	Logger.Warn("missing writer or request; cannot compose status line")
+	return ""
+}
+
+// logByLevel emits final status line with selected log level.
+// The logger parameter is the request logger.
+// The status parameter is the final status message content.
+// The level parameter controls whether to log with info or debug.
+// It does not return a value.
+func logByLevel(logger glog.Logger, status, level string) {
+	switch level {
+	case string(glog.LevelInfo):
+		logger.Info(status)
+	default:
+		logger.Debug(status)
 	}
 }
 

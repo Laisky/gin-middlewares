@@ -14,7 +14,7 @@ func TraceID(ctx *gin.Context) (gutils.JaegerTracingID, error) {
 		val = ctx.GetString(gutils.TracingKey)
 		// then try request header when request is available
 		if val == "" && ctx.Request != nil {
-			val = ctx.Request.Header.Get(gutils.TracingKey)
+			val = ctx.Request.Header.Get(gutils.TracingKey.String())
 		}
 	} else {
 		Logger.Warn("TraceID called with nil gin.Context; creating new trace id")

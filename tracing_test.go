@@ -27,7 +27,7 @@ func TestTraceID(t *testing.T) {
 			},
 		}
 		expectedID := "1234567890:1234567890:1234:2"
-		ctx.Request.Header.Set(gutils.TracingKey, expectedID)
+		ctx.Request.Header.Set(gutils.TracingKey.String(), expectedID)
 
 		id, err := TraceID(ctx)
 		require.NoError(t, err)

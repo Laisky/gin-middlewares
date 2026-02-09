@@ -82,10 +82,6 @@ func EnableMetric(srv gin.IRouter, options ...MetricsOptFunc) (err error) {
 
 // NewHTTPMetricSrv start new gin server with metrics api
 func NewHTTPMetricSrv(ctx context.Context, options ...MetricsOptFunc) (srv *http.Server, err error) {
-	if ctx == nil {
-		Logger.Warn("NewHTTPMetricSrv got nil context, using background context")
-		ctx = context.Background()
-	}
 	opt := newMetricOption()
 	for _, optf := range options {
 		if err = optf(opt); err != nil {
@@ -106,8 +102,10 @@ func NewHTTPMetricSrv(ctx context.Context, options ...MetricsOptFunc) (srv *http
 	go func() {
 		<-ctx.Done()
 		Logger.Info("got signal to shutdown metric server")
+
 		timingCtx, cancel := context.WithTimeout(context.Background(), opt.graceWait)
 		defer cancel()
+		//nolint:contextcheck // use background context for shutdown to avoid shutdown being canceled by parent context
 		if err := srv.Shutdown(timingCtx); err != nil {
 			Logger.Error("shutdown metrics server", zap.Error(err), zap.String("addr", opt.addr))
 		}

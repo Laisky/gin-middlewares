@@ -3,7 +3,9 @@ package middlewares
 import (
 	"context"
 	"net/http"
+	"net/url"
 	"strconv"
+	"strings"
 	"time"
 
 	gutils "github.com/Laisky/go-utils/v6"
@@ -15,6 +17,23 @@ import (
 const (
 	defaultCtxKeyLogger gutils.CtxKey = "gmw-logger"
 )
+
+var sensitiveQueryParamNames = map[string]struct{}{
+	"access_token":  {},
+	"api_key":       {},
+	"authorization": {},
+	"client_secret": {},
+	"code":          {},
+	"id_token":      {},
+	"key":           {},
+	"password":      {},
+	"passwd":        {},
+	"refresh_token": {},
+	"secret":        {},
+	"sig":           {},
+	"signature":     {},
+	"token":         {},
+}
 
 // LoggerInterface logger interface
 // type LoggerInterface interface {
@@ -202,7 +221,7 @@ func requestBasicFields(ctx *gin.Context) (string, string, string) {
 	var urlStr, remote, host string
 	if ctx != nil && ctx.Request != nil {
 		if ctx.Request.URL != nil {
-			urlStr = ctx.Request.URL.String()
+			urlStr = redactURLForLogging(ctx.Request.URL)
 		}
 		remote = ctx.Request.RemoteAddr
 		host = ctx.Request.Host
@@ -211,6 +230,38 @@ func requestBasicFields(ctx *gin.Context) (string, string, string) {
 	}
 
 	return urlStr, remote, host
+}
+
+// redactURLForLogging masks sensitive query parameter values before they are written to logs.
+// The reqURL parameter is the request URL to serialize for logging.
+// It returns the original URL string when there is nothing to redact.
+func redactURLForLogging(reqURL *url.URL) string {
+	if reqURL == nil || reqURL.RawQuery == "" {
+		if reqURL == nil {
+			return ""
+		}
+
+		return reqURL.String()
+	}
+
+	redactedURL := *reqURL
+	query := redactedURL.Query()
+	hasSensitiveParam := false
+	for key := range query {
+		if _, ok := sensitiveQueryParamNames[strings.ToLower(key)]; !ok {
+			continue
+		}
+
+		hasSensitiveParam = true
+		query[key] = []string{"[REDACTED]"}
+	}
+
+	if !hasSensitiveParam {
+		return reqURL.String()
+	}
+
+	redactedURL.RawQuery = query.Encode()
+	return redactedURL.String()
 }
 
 // withRequestSizeField appends request payload size when request method carries body.

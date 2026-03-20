@@ -1,9 +1,12 @@
 package middlewares
 
 import (
+	"context"
+	"net/http"
 	"net/http/httptest"
 	"testing"
 
+	gutils "github.com/Laisky/go-utils/v6"
 	glog "github.com/Laisky/go-utils/v6/log"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/require"
@@ -35,4 +38,37 @@ func TestRequestBasicFieldsRedactsSensitiveQueryParams(t *testing.T) {
 	require.Equal(t, "example.com", host)
 	require.NotContains(t, urlStr, "oauth-code")
 	require.NotContains(t, urlStr, "bearer-token")
+}
+
+func TestBackgroundCtxUsesRealBackgroundContext(t *testing.T) {
+	t.Parallel()
+
+	type requestCtxKey string
+
+	const key requestCtxKey = "request-only"
+
+	requestBaseCtx, cancel := context.WithCancel(context.WithValue(context.Background(), key, "request-value"))
+	defer cancel()
+
+	w := httptest.NewRecorder()
+	gctx, _ := gin.CreateTestContext(w)
+	gctx.Request = httptest.NewRequest(http.MethodGet, "/", nil).WithContext(requestBaseCtx)
+	logger := glog.Shared.Named("background-ctx")
+	SetLogger(gctx, logger)
+
+	ctx := BackgroundCtx(gctx)
+	cancel()
+
+	select {
+	case <-ctx.Done():
+		t.Fatal("BackgroundCtx should not inherit request cancellation")
+	default:
+	}
+
+	require.Nil(t, ctx.Value(key))
+	require.Equal(t, logger, GetLogger(ctx))
+	require.Same(t, gctx, ctx.Value(CtxKeyGin))
+	require.NotNil(t, ctx.Value(gutils.TracingKey))
+	_, ok := GetGinCtxFromStdCtx(ctx)
+	require.True(t, ok)
 }

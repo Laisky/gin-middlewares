@@ -5,15 +5,15 @@ import (
 
 	"github.com/Laisky/zap"
 	"github.com/gin-gonic/gin"
-	"github.com/golang-jwt/jwt/v4"
+	"github.com/golang-jwt/jwt/v5"
 )
 
 type UserClaims struct {
-	jwt.StandardClaims
+	jwt.RegisteredClaims
 }
 
 func ExampleAuth() {
-	auth, err := NewAuth([]byte("f32lifj2f32fj"))
+	auth, err := NewAuth([]byte(testHS256Secret))
 	if err != nil {
 		Logger.Panic("try to init gin auth got error", zap.Error(err))
 	}

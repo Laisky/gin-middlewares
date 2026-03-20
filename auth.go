@@ -10,7 +10,7 @@ import (
 	"github.com/Laisky/errors/v2"
 	gjwt "github.com/Laisky/go-utils/v6/jwt"
 	"github.com/Laisky/zap"
-	"github.com/golang-jwt/jwt/v4"
+	"github.com/golang-jwt/jwt/v5"
 )
 
 const (

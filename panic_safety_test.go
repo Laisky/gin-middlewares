@@ -9,7 +9,7 @@ import (
 	gutils "github.com/Laisky/go-utils/v6"
 	glog "github.com/Laisky/go-utils/v6/log"
 	"github.com/gin-gonic/gin"
-	"github.com/golang-jwt/jwt/v4"
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/stretchr/testify/require"
 )
 
@@ -90,7 +90,7 @@ func TestColoredStatus_NoPanic(t *testing.T) {
 type dummyClaims struct{ jwt.RegisteredClaims }
 
 func TestAuth_NoPanicOnMissingParts(t *testing.T) {
-	a, err := NewAuth([]byte("secret"))
+	a, err := NewAuth([]byte(testHS256Secret))
 	require.NoError(t, err)
 
 	// GetUserClaims with non-gin ctx
@@ -115,7 +115,7 @@ func TestAuth_NoPanicOnMissingParts(t *testing.T) {
 }
 
 func TestGetUserClaims_NoPanicOnMalformedHeader(t *testing.T) {
-	a, err := NewAuth([]byte("secret"))
+	a, err := NewAuth([]byte(testHS256Secret))
 	require.NoError(t, err)
 
 	w := httptest.NewRecorder()

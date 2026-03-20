@@ -7,11 +7,11 @@ toolchain go1.25.7
 require (
 	github.com/Laisky/errors/v2 v2.0.1
 	github.com/Laisky/go-gin-prometheus v1.0.1
-	github.com/Laisky/go-utils/v6 v6.2.2
+	github.com/Laisky/go-utils/v6 v6.2.3-0.20260319234920-4574d62cf3a4
 	github.com/Laisky/pprof v0.0.0-20231102060718-a7a7fd2965ee
-	github.com/Laisky/zap v1.27.1-0.20241010063010-3154c45f2a1f
+	github.com/Laisky/zap v1.27.1-0.20260318034917-6e5a9fb2b3d1
 	github.com/gin-gonic/gin v1.12.0
-	github.com/golang-jwt/jwt/v4 v4.5.2
+	github.com/golang-jwt/jwt/v5 v5.3.1
 	github.com/stretchr/testify v1.11.1
 )
 

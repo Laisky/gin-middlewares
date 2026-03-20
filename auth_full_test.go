@@ -8,7 +8,7 @@ import (
 
 	gjwt "github.com/Laisky/go-utils/v6/jwt"
 	"github.com/gin-gonic/gin"
-	"github.com/golang-jwt/jwt/v4"
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/stretchr/testify/require"
 )
 
@@ -55,7 +55,7 @@ func (m *mockJWT) ParseClaimsByRS256(token string, claimsPtr jwt.Claims, opts ..
 func TestNewAuth_AllBranches(t *testing.T) {
 	t.Parallel()
 
-	_, err := NewAuth([]byte("secret"), func(*Auth) error {
+	_, err := NewAuth([]byte(testHS256Secret), func(*Auth) error {
 		return stderrors.New("opt boom")
 	})
 	require.ErrorContains(t, err, "set option")
@@ -63,8 +63,11 @@ func TestNewAuth_AllBranches(t *testing.T) {
 	_, err = NewAuth(nil)
 	require.ErrorContains(t, err, "try to create Auth got error")
 
+	_, err = NewAuth([]byte("secret"))
+	require.ErrorContains(t, err, "try to create Auth got error")
+
 	mjwt := &mockJWT{}
-	a, err := NewAuth([]byte("secret"), WithAuthJWT(mjwt))
+	a, err := NewAuth([]byte(testHS256Secret), WithAuthJWT(mjwt))
 	require.NoError(t, err)
 	require.Same(t, mjwt, a.jwt)
 }

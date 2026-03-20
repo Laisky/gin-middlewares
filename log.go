@@ -136,7 +136,8 @@ func BackgroundCtx(c *gin.Context) context.Context {
 		panic("gin context is nil in BackgroundCtx")
 	}
 
-	ctx := SetLogger(c, GetLogger(c))
+	ctx := context.Background()
+	ctx = SetLogger(ctx, GetLogger(c))
 	ctx = context.WithValue(ctx, CtxKeyGin, c)
 
 	if tid, err := TraceID(c); err != nil {

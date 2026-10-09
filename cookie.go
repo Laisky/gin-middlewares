@@ -14,7 +14,7 @@ import (
 const (
 	defaultCookiePath     = "/"
 	defaultCookieSecure   = false
-	defaultCookieHTTPOnly = false
+	defaultCookieHTTPOnly = true
 )
 
 type setCookieOption struct {

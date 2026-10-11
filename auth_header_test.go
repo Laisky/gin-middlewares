@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/gin-gonic/gin"
-	"github.com/golang-jwt/jwt/v4"
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/stretchr/testify/require"
 )
 
@@ -37,7 +37,7 @@ func TestExtractTokenFromAuthHeader(t *testing.T) {
 }
 
 func TestGetUserClaims_HeaderVariants(t *testing.T) {
-	a, err := NewAuth([]byte("secret"))
+	a, err := NewAuth([]byte(testHS256Secret))
 	require.NoError(t, err)
 
 	token, err := a.Sign(&dummyClaims{RegisteredClaims: jwt.RegisteredClaims{Subject: "user-1"}})

@@ -103,9 +103,9 @@ func NewHTTPMetricSrv(ctx context.Context, options ...MetricsOptFunc) (srv *http
 		<-ctx.Done()
 		Logger.Info("got signal to shutdown metric server")
 
-		timingCtx, cancel := context.WithTimeout(context.Background(), opt.graceWait)
+		shutdownCtx := context.WithoutCancel(ctx)
+		timingCtx, cancel := context.WithTimeout(shutdownCtx, opt.graceWait)
 		defer cancel()
-		//nolint:contextcheck // use background context for shutdown to avoid shutdown being canceled by parent context
 		if err := srv.Shutdown(timingCtx); err != nil {
 			Logger.Error("shutdown metrics server", zap.Error(err), zap.String("addr", opt.addr))
 		}

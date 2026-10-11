@@ -14,7 +14,7 @@ import (
 const (
 	defaultCookiePath     = "/"
 	defaultCookieSecure   = false
-	defaultCookieHTTPOnly = false
+	defaultCookieHTTPOnly = true
 )
 
 type setCookieOption struct {
@@ -120,7 +120,7 @@ func WithCookieSecure(secure bool) SetCookieOption {
 	}
 }
 
-// WithCookieHTTPOnly set auth cookie's HTTPOnly
+// WithCookieHTTPOnly sets the cookie's HTTPOnly flag, which defaults to true.
 func WithCookieHTTPOnly(httpOnly bool) SetCookieOption {
 	Logger.Debug("set auth cookie httpOnly", zap.Bool("httpOnly", httpOnly))
 	return func(opt *setCookieOption) error {
@@ -138,7 +138,8 @@ func WithCookieHost(host string) SetCookieOption {
 	}
 }
 
-// SetCookie set jwt token to cookies
+// SetCookie stores a token cookie with HTTPOnly enabled by default.
+// Use WithCookieHTTPOnly(false) only when JavaScript access is explicitly required.
 func SetCookie(ctx *gin.Context,
 	name, value string,
 	opts ...SetCookieOption) (err error) {

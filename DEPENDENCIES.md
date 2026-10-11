@@ -1,9 +1,11 @@
-This candidate preserves github.com/Laisky/gin-middlewares/v5 and original v5 dependency PR histories #4,#6,#7. JWT remains on v4 at4.5.2 for GO-2025-3553. Patched x/net v0.60.0 covers current HTTP/2 advisories; x/crypto is0.57.0. The compiler requirement is Go1.26.0, with qualification on patched Go1.26.9. Full authentication/metrics race tests, module verification, vet and build pass.
+The candidate preserves its module identity and existing API major. Go1.26.0 is required by patched x/net v0.60.0; qualification uses Go1.26.9. Imported-package advisories are fixed with versioned JWT v4.5.2, patched Logrus and protobuf/Gin where required. Module verification, vet, build and full race tests pass without assertion removal or security suppression.
 
 Your code is affected by 0 vulnerabilities.
-This scan also found 1 vulnerability in packages you import and 1 vulnerability
-in modules you require, but your code doesn't appear to call these
+This scan also found 0 vulnerabilities in packages you import and 1
+vulnerability in modules you require, but your code doesn't appear to call these
 vulnerabilities.
 Use '-show verbose' for more details.
 
-No finding is suppressed. Await exact-head Snyk. This v5 candidate is not retargeted to v7.
+The remaining unused required-module advisory is GO-2026-5932 for the unmaintained x/crypto/openpgp package, with no upstream fixed version. The repository source does not call or import the vulnerable package. This does not qualify arbitrary downstream consumers of the module graph.
+
+Original v5 PRs #4,#6,#7 are preserved as ancestors. The old major is not retargeted to v7. Await exact-head Snyk before merge.

@@ -108,3 +108,28 @@ func TestNormalizeCookieHost(t *testing.T) {
 		})
 	}
 }
+
+// TestSetCookie_HTTPOnlyDefaultAndOptOut covers the security default and deliberate client access.
+func TestSetCookie_HTTPOnlyDefaultAndOptOut(t *testing.T) {
+	for _, tc := range []struct {
+		name string
+		opts []SetCookieOption
+		want bool
+	}{
+		{"default", nil, true},
+		{"explicit false", []SetCookieOption{WithCookieHTTPOnly(false)}, false},
+		{"explicit true", []SetCookieOption{WithCookieHTTPOnly(true)}, true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			w := httptest.NewRecorder()
+			ctx, _ := gin.CreateTestContext(w)
+			ctx.Request = httptest.NewRequest("GET", "http://example.com:8080/", nil)
+			require.NoError(t, SetCookie(ctx, "sid", "synthetic-token", tc.opts...))
+			cookies := w.Result().Cookies()
+			require.Len(t, cookies, 1)
+			require.Equal(t, tc.want, cookies[0].HttpOnly)
+			require.Equal(t, "example.com", cookies[0].Domain)
+			require.False(t, cookies[0].Secure)
+		})
+	}
+}

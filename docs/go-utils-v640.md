@@ -16,3 +16,9 @@ acceptance.
 Adopt through a rebuilt canary after CI review and keep the old dependency
 commit/binary for rollback. No sessions, policies or stored data are migrated.
 This task does not merge or deploy.
+
+This repository previously had no test workflow. The new read-only
+go-utils-consumer workflow checks the immutable original consumer graph and
+candidate with Go1.26.9 and1.27.2. It retains all race tests and candidate
+vet/build/module-consistency checks, uses no secrets or live services, and
+cannot publish or deploy. Snyk settings are unchanged.

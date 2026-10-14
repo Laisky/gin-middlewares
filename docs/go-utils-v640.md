@@ -6,9 +6,12 @@ Used APIs are JWT signing/parsing, tracing, context-aware logging, time and
 format helpers. The consumer does not call PasswordHash, legacy crypto,
 CopyFile or memory Search, so no storage-format adaptation is introduced.
 
-The retained middleware tests cover missing/malformed bearer headers, invalid
-signature/expiry, context logger propagation, trace-ID handling, request
-redaction, panic safety and canceled-request background work. Run the same
+The retained middleware tests cover valid-token/header handling, malformed
+headers and authentication mocks, context logger propagation, trace-ID
+handling, request redaction, panic safety and canceled-request background work.
+Invalid JWT signature and expiry rejection are not asserted by the retained
+tests. The used upstream JWT code is unchanged across this dependency update.
+Run the same
 race suite against the original and updated graphs. Local and exact-head CI
 receipts are recorded in the Draft PR description; publication alone is not
 acceptance.

@@ -1,0 +1,55 @@
+name: go-utils consumer compatibility
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  compatibility:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        go: ['1.26.9', '1.27.2']
+    steps:
+      - name: Checkout exact prior consumer graph
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: '7468ae7d8b2601b7590e0edc7f54001a07922875'
+          path: baseline
+          persist-credentials: false
+      - name: Checkout candidate
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          path: candidate
+          persist-credentials: false
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e
+        with:
+          go-version: ${{ matrix.go }}
+          cache: false
+      - name: Original consumer behavior controls
+        working-directory: baseline
+        env:
+          GOTOOLCHAIN: local
+        run: |
+          go mod download
+          go mod verify
+          go test -race -count=1 -timeout=5m ./...
+      - name: Candidate consumer behavior and build
+        working-directory: candidate
+        env:
+          GOTOOLCHAIN: local
+        run: |
+          test -z "$(gofmt -l $(git ls-files '*.go'))"
+          go mod download
+          go mod verify
+          go test -race -count=1 -timeout=5m ./...
+          go vet ./...
+          go build ./...
+          go mod tidy
+          git diff --exit-code -- go.mod go.sum

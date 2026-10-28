@@ -5,7 +5,7 @@ go 1.26.0
 require (
 	github.com/Laisky/errors/v2 v2.0.1
 	github.com/Laisky/go-gin-prometheus v1.0.1
-	github.com/Laisky/go-utils/v6 v6.4.1-0.20261028101011-0f5eeca06f8d
+	github.com/Laisky/go-utils/v6 v6.4.1-0.20261028151721-188dec4c3b75
 	github.com/Laisky/pprof v0.0.0-20231102060718-a7a7fd2965ee
 	github.com/Laisky/zap v1.27.1-0.20261006114731-55f41c2b5061
 	github.com/gin-gonic/gin v1.12.0
@@ -25,9 +25,9 @@ require (
 	github.com/cespare/xxhash v1.1.0 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/cloudwego/base64x v0.1.6 // indirect
-	github.com/fsnotify/fsnotify v1.9.0 // indirect
+	github.com/fsnotify/fsnotify v1.10.1 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.13 // indirect
-	github.com/gammazero/deque v1.2.1 // indirect
+	github.com/gammazero/deque v1.2.2 // indirect
 	github.com/gin-contrib/sse v1.1.0 // indirect
 	github.com/go-playground/locales v0.14.1 // indirect
 	github.com/go-playground/universal-translator v0.18.1 // indirect
